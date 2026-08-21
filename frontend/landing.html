@@ -1,0 +1,270 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VetCare - Clinica Veterinaria</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:"#ecfdf5",100:"#d1fae5",200:"#a7f3d0",300:"#6ee7b7",400:"#34d399",500:"#22a060",600:"#1a8a50",700:"#147a44",800:"#0f5c33",900:"#0a3d22" }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .hero-bg{background:linear-gradient(135deg,#147a44 0%,#22a060 40%,#34d399 100%);position:relative;overflow:hidden}
+    .hero-bg::before{content:"";position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23fff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E")}
+    .fade-in{animation:fadeIn .4s ease-out}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .slide-up{animation:slideUp .6s ease-out both}
+    @keyframes slideUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+    .card-hover{transition:transform .2s,box-shadow .2s}
+    .card-hover:hover{transform:translateY(-6px);box-shadow:0 20px 40px rgba(0,0,0,.1)}
+    .wa-float{position:fixed;bottom:24px;right:24px;z-index:999;width:60px;height:60px;border-radius:50%;background:#25d366;color:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 4px 20px rgba(37,211,102,.4);transition:transform .2s,box-shadow .2s;text-decoration:none}
+    .wa-float:hover{transform:scale(1.1);box-shadow:0 6px 28px rgba(37,211,102,.55)}
+    .inp{transition:border-color .2s,box-shadow .2s}
+    .inp:focus{border-color:#22a060;box-shadow:0 0 0 3px rgba(34,160,96,.15)}
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+
+  <!-- NAVBAR -->
+  <nav class="bg-white/95 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+      <a href="/landing" class="flex items-center gap-2.5">
+        <div class="w-9 h-9 bg-brand-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-paw text-white text-sm"></i></div>
+        <span class="font-extrabold text-xl text-gray-900">Vet<span class="text-brand-500">Care</span></span>
+      </a>
+      <div class="hidden sm:flex items-center gap-2">
+        <a href="#agendar" class="px-5 py-2 rounded-full text-sm font-semibold bg-brand-500 text-white hover:bg-brand-600 transition shadow-sm"><i class="fa-solid fa-calendar-check mr-1.5"></i>Agendar Cita</a>
+        <a href="/" class="px-5 py-2 rounded-full text-sm font-semibold text-gray-600 hover:bg-gray-100 transition"><i class="fa-solid fa-right-to-bracket mr-1.5"></i>Panel Admin</a>
+      </div>
+      <a href="#agendar" class="sm:hidden px-4 py-2 rounded-full text-sm font-semibold bg-brand-500 text-white"><i class="fa-solid fa-calendar-check"></i></a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero-bg text-white py-20 lg:py-28 px-4">
+    <div class="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12 lg:gap-16 relative z-10">
+      <div class="flex-1 text-center lg:text-left">
+        <div class="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-4 py-1.5 text-sm font-medium mb-6 slide-up">
+          <i class="fa-solid fa-shield-heart"></i>Clinica Veterinaria de Confianza
+        </div>
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight mb-5 slide-up" style="animation-delay:.1s">&iquest;Quieres agendar una cita<br class="hidden sm:block"/> para tu mascota?</h1>
+        <p class="text-lg sm:text-xl text-emerald-100 mb-8 max-w-xl mx-auto lg:mx-0 slide-up" style="animation-delay:.2s">En VetCare cuidamos a quien mas quieres. Agenda una cita en segundos y recibe atencion profesional con el carino que tu companion merece.</p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start slide-up" style="animation-delay:.3s">
+          <a href="#agendar" class="inline-flex items-center justify-center gap-2 bg-white text-brand-700 px-8 py-3.5 rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-brand-50 transition text-base"><i class="fa-solid fa-calendar-plus"></i>Agendar Cita Ahora</a>
+          <a href="/" class="inline-flex items-center justify-center gap-2 bg-white/15 backdrop-blur-sm text-white border border-white/30 px-8 py-3.5 rounded-xl font-bold hover:bg-white/25 transition text-base"><i class="fa-solid fa-gauge-high"></i>Panel Admin</a>
+        </div>
+      </div>
+      <div class="flex-1 flex justify-center slide-up" style="animation-delay:.2s">
+        <div class="relative">
+          <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600&h=500&fit=crop&crop=faces" alt="Mascota feliz en clinica veterinaria" class="rounded-3xl shadow-2xl w-full max-w-md object-cover border-4 border-white/20" loading="lazy"/>
+          <div class="absolute -bottom-4 -left-4 bg-white rounded-2xl px-5 py-3 shadow-xl flex items-center gap-3">
+            <div class="w-10 h-10 bg-brand-100 rounded-full flex items-center justify-center"><i class="fa-solid fa-heart-pulse text-brand-600"></i></div>
+            <div><p class="text-xs text-gray-400 font-medium">Atencion 24/7</p><p class="text-sm font-bold text-gray-800">Emergencias</p></div>
+          </div>
+          <div class="absolute -top-4 -right-4 bg-white rounded-2xl px-5 py-3 shadow-xl flex items-center gap-3">
+            <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center"><i class="fa-solid fa-star text-amber-500"></i></div>
+            <div><p class="text-xs text-gray-400 font-medium">Calificacion</p><p class="text-sm font-bold text-gray-800">4.9 / 5.0</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVICIOS -->
+  <section class="py-20 px-4 bg-white">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-14">
+        <span class="inline-block text-brand-600 font-semibold text-sm uppercase tracking-wider mb-3">Nuestros Servicios</span>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">Cuidado integral para tu mascota</h2>
+        <p class="text-gray-500 max-w-2xl mx-auto">Ofrecemos una gama completa de servicios veterinarios con los mas altos estandares de calidad y equipo especializado.</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7">
+        <div class="bg-white rounded-2xl border border-gray-100 p-7 text-center card-hover shadow-sm">
+          <div class="w-16 h-16 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-5"><i class="fa-solid fa-stethoscope text-brand-600 text-2xl"></i></div>
+          <h3 class="font-bold text-gray-900 text-lg mb-2">Consultas Generales</h3>
+          <p class="text-sm text-gray-500 leading-relaxed">Examenes clinicos completos con diagnostico preciso. Evaluacion fisica, historial medico y plan de tratamiento personalizado para tu mascota.</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-gray-100 p-7 text-center card-hover shadow-sm">
+          <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-5"><i class="fa-solid fa-syringe text-blue-600 text-2xl"></i></div>
+          <h3 class="font-bold text-gray-900 text-lg mb-2">Vacunacion</h3>
+          <p class="text-sm text-gray-500 leading-relaxed">Esquemas de vacunacion actualizados segun la edad y estilo de vida. Proteccion contra rabia, moquillo, parvovirus y otras enfermedades comunes.</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-gray-100 p-7 text-center card-hover shadow-sm">
+          <div class="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-5"><i class="fa-solid fa-scissors text-amber-600 text-2xl"></i></div>
+          <h3 class="font-bold text-gray-900 text-lg mb-2">Cirugia</h3>
+          <p class="text-sm text-gray-500 leading-relaxed">Procedimientos quirurgicos con equipo de ultima generacion y monitoreo continuo. Esterilizaciones, ortopedia y cirugias de tejidos blandos.</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-gray-100 p-7 text-center card-hover shadow-sm">
+          <div class="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-5"><i class="fa-solid fa-microscope text-purple-600 text-2xl"></i></div>
+          <h3 class="font-bold text-gray-900 text-lg mb-2">Laboratorio</h3>
+          <p class="text-sm text-gray-500 leading-relaxed">Analisis clinicos, radiografias, ecografias y estudios de sangre con resultados rapidos. Diagnostico por imagen de alta precision.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FORMULARIO -->
+  <section id="agendar" class="py-20 px-4 bg-gradient-to-b from-gray-50 to-white">
+    <div class="max-w-3xl mx-auto">
+      <div class="text-center mb-12">
+        <span class="inline-block text-brand-600 font-semibold text-sm uppercase tracking-wider mb-3">Agenda tu Cita</span>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">&iquest;Listo para agendar?</h2>
+        <p class="text-gray-500 max-w-xl mx-auto">Completa el formulario y te contactaremos por WhatsApp para confirmar tu cita al instante.</p>
+      </div>
+      <div id="form-card" class="bg-white rounded-3xl shadow-2xl p-8 sm:p-10 fade-in border border-gray-100">
+        <form id="form-cita-publica" onsubmit="submitCitaPublica(event)" class="space-y-6">
+          <div>
+            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4"><i class="fa-solid fa-user mr-1.5"></i>Datos del Propietario</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Tu nombre completo *</label>
+                <div class="relative"><span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-solid fa-user text-sm"></i></span>
+                <input id="cp-nombre" required placeholder="Ej. Juan Perez" class="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm inp outline-none bg-gray-50/50"/></div>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Telefono (WhatsApp) *</label>
+                <div class="relative"><span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-brands fa-whatsapp text-sm"></i></span>
+                <input id="cp-telefono" type="tel" required placeholder="982127669" maxlength="9" class="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm inp outline-none bg-gray-50/50"/></div>
+              </div>
+            </div>
+          </div>
+          <hr class="border-gray-100"/>
+          <div>
+            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4"><i class="fa-solid fa-paw mr-1.5"></i>Datos de la Mascota</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Nombre de la mascota *</label>
+                <div class="relative"><span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-solid fa-dog text-sm"></i></span>
+                <input id="cp-mascota" required placeholder="Ej. Firulais" class="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm inp outline-none bg-gray-50/50"/></div>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Especie *</label>
+                <div class="relative"><span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-solid fa-paw text-sm"></i></span>
+                <select id="cp-especie" required class="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm inp outline-none bg-gray-50/50 appearance-none">
+                  <option value="">Seleccionar especie...</option><option value="Perro">Perro</option><option value="Gato">Gato</option><option value="Ave">Ave</option><option value="Reptil">Reptil</option><option value="Conejo">Conejo</option><option value="Otro">Otro</option>
+                </select>
+                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"><i class="fa-solid fa-chevron-down text-xs"></i></span></div>
+              </div>
+            </div>
+          </div>
+          <hr class="border-gray-100"/>
+          <div>
+            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4"><i class="fa-solid fa-calendar mr-1.5"></i>Datos de la Cita</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Fecha y hora *</label>
+                <div class="relative"><span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-solid fa-clock text-sm"></i></span>
+                <input id="cp-fecha" type="datetime-local" required class="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm inp outline-none bg-gray-50/50"/></div>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Motivo de la cita *</label>
+                <div class="relative"><span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-solid fa-clipboard-list text-sm"></i></span>
+                <select id="cp-motivo" required class="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm inp outline-none bg-gray-50/50 appearance-none">
+                  <option value="">Seleccionar motivo...</option><option value="Consulta general">Consulta general</option><option value="Vacunacion">Vacunacion</option><option value="Control de salud">Control de salud</option><option value="Emergencia">Emergencia</option><option value="Cirugia">Cirugia</option><option value="Desparasitacion">Desparasitacion</option><option value="Estetica / Bano">Estetica / Bano</option><option value="Otro">Otro</option>
+                </select>
+                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"><i class="fa-solid fa-chevron-down text-xs"></i></span></div>
+              </div>
+            </div>
+          </div>
+          <div id="cp-error" class="hidden text-sm text-red-600 bg-red-50 rounded-xl px-5 py-3 border border-red-100"><i class="fa-solid fa-circle-exclamation mr-1.5"></i><span id="cp-error-text"></span></div>
+          <button type="submit" id="btn-submit" class="w-full bg-brand-500 text-white py-3.5 rounded-xl text-base font-bold hover:bg-brand-600 transition-all shadow-lg shadow-brand-500/25 hover:shadow-xl flex items-center justify-center gap-2"><i class="fa-solid fa-calendar-check"></i>Registrar Cita</button>
+        </form>
+      </div>
+      <div id="resultado" class="hidden bg-white rounded-3xl shadow-2xl p-10 text-center fade-in border border-gray-100">
+        <div class="w-20 h-20 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-5"><i class="fa-solid fa-check text-brand-600 text-3xl"></i></div>
+        <h3 class="text-2xl font-extrabold text-gray-900 mb-2">Cita Registrada</h3>
+        <p id="resultado-texto" class="text-gray-500 mb-8"></p>
+        <a id="btn-whatsapp" href="#" target="_blank" class="inline-flex items-center gap-2.5 bg-[#25d366] text-white px-10 py-4 rounded-xl font-bold hover:bg-[#20ba5a] transition shadow-lg shadow-green-200 text-base"><i class="fa-brands fa-whatsapp text-xl"></i>Confirmar por WhatsApp</a>
+        <p class="text-xs text-gray-400 mt-4">Te redirigiremos a WhatsApp con los datos prellenados para confirmar tu cita.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="bg-gray-900 text-gray-400">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+        <div>
+          <div class="flex items-center gap-2.5 mb-4"><div class="w-9 h-9 bg-brand-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-paw text-white text-sm"></i></div><span class="font-extrabold text-xl text-white">Vet<span class="text-brand-400">Care</span></span></div>
+          <p class="text-sm leading-relaxed">Clinica veterinaria comprometida con la salud y bienestar de tu mascota. Atencion profesional con calidez humana.</p>
+        </div>
+        <div>
+          <h4 class="text-white font-bold text-sm uppercase tracking-wider mb-4"><i class="fa-solid fa-location-dot mr-2 text-brand-400"></i>Ubicacion</h4>
+          <p class="text-sm leading-relaxed">San Juan de Lurigancho<br/>Lima, Peru</p>
+          <p class="text-sm mt-2"><i class="fa-solid fa-map-pin mr-2 text-brand-400"></i>Av. San Martin de Porres 123</p>
+        </div>
+        <div>
+          <h4 class="text-white font-bold text-sm uppercase tracking-wider mb-4"><i class="fa-solid fa-phone mr-2 text-brand-400"></i>Contacto</h4>
+          <p class="text-sm"><i class="fa-solid fa-phone mr-2 text-brand-400"></i>982 127 669</p>
+          <p class="text-sm mt-2"><i class="fa-brands fa-whatsapp mr-2 text-green-400"></i>982 127 669</p>
+          <p class="text-sm mt-2"><i class="fa-solid fa-envelope mr-2 text-brand-400"></i>contacto@vetcare.com</p>
+        </div>
+        <div>
+          <h4 class="text-white font-bold text-sm uppercase tracking-wider mb-4"><i class="fa-solid fa-clock mr-2 text-brand-400"></i>Horarios</h4>
+          <p class="text-sm"><i class="fa-solid fa-calendar-days mr-2 text-brand-400"></i>Lunes a Viernes</p>
+          <p class="text-sm ml-6">8:00 AM - 8:00 PM</p>
+          <p class="text-sm mt-2"><i class="fa-solid fa-calendar-days mr-2 text-brand-400"></i>Sabados</p>
+          <p class="text-sm ml-6">8:00 AM - 2:00 PM</p>
+          <p class="text-sm mt-2"><i class="fa-solid fa-calendar-xmark mr-2 text-brand-400"></i>Domingos: Cerrado</p>
+          <p class="text-sm mt-3 text-green-400 font-semibold"><i class="fa-solid fa-truck-medical mr-2"></i>Emergencias 24/7</p>
+        </div>
+      </div>
+      <div class="border-t border-gray-800 mt-10 pt-6 text-center text-xs text-gray-500">
+        <p>&copy; 2026 Veterinaria VetCare. Todos los derechos reservados.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- BOTON FLOTANTE WHATSAPP -->
+  <a href="https://wa.me/51982127669" target="_blank" class="wa-float" title="Contactanos por WhatsApp">
+    <i class="fa-brands fa-whatsapp"></i>
+  </a>
+
+  <script>
+    const API = "";
+    const WA_NUM = "51982127669";
+
+    async function submitCitaPublica(e) {
+      e.preventDefault();
+      const errEl = document.getElementById("cp-error");
+      errEl.classList.add("hidden");
+      const body = {
+        nombre_propietario: document.getElementById("cp-nombre").value.trim(),
+        telefono: document.getElementById("cp-telefono").value.trim(),
+        nombre_mascota: document.getElementById("cp-mascota").value.trim(),
+        especie: document.getElementById("cp-especie").value,
+        fecha_hora: new Date(document.getElementById("cp-fecha").value).toISOString(),
+        motivo: document.getElementById("cp-motivo").value,
+      };
+      const btn = document.getElementById("btn-submit");
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>Registrando...';
+      try {
+        const res = await fetch(API + "/citas/publica", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Error al registrar");
+        const fecha = new Date(body.fecha_hora).toLocaleDateString("es-MX", { weekday:"long", year:"numeric", month:"long", day:"numeric", hour:"2-digit", minute:"2-digit" });
+        const msg = encodeURIComponent("Hola, mi nombre es " + body.nombre_propietario + ". Quiero confirmar una cita para " + body.nombre_mascota + " (" + body.especie + ").\nFecha: " + fecha + "\nMotivo: " + body.motivo + "\nGracias!");
+        document.getElementById("form-card").classList.add("hidden");
+        document.getElementById("resultado").classList.remove("hidden");
+        document.getElementById("resultado-texto").textContent = body.nombre_mascota + " esta registrado. Estado: Pendiente de confirmacion.";
+        document.getElementById("btn-whatsapp").href = "https://wa.me/" + WA_NUM + "?text=" + msg;
+      } catch (err) {
+        document.getElementById("cp-error-text").textContent = err.message;
+        errEl.classList.remove("hidden");
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-calendar-check"></i>Registrar Cita';
+      }
+    }
+  </script>
+</body>
+</html>

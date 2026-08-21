@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Veterinaria - Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: "#f0fdf4", 100: "#dcfce7", 500: "#22c55e", 600: "#16a34a", 700: "#15803d", 800: "#166534" }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .fade-in { animation: fadeIn .25s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen flex flex-col">
+
+  <!-- ═══════════════════ LOGIN / REGISTER ═══════════════════ -->
+  <div id="auth-screen" class="flex-1 flex items-center justify-center p-4">
+    <div class="w-full max-w-md fade-in">
+      <!-- Logo -->
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-brand-600 rounded-2xl mb-4">
+          <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z" />
+          </svg>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-800">VetCare</h1>
+        <p class="text-sm text-gray-500 mt-1">Sistema de gestion veterinaria</p>
+      </div>
+
+      <!-- Tabs Login / Registro -->
+      <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div class="flex border-b">
+          <button id="tab-login" onclick="showAuthTab('login')" class="flex-1 py-3 text-sm font-semibold text-brand-700 border-b-2 border-brand-600 transition">Iniciar Sesion</button>
+          <button id="tab-register" onclick="showAuthTab('register')" class="flex-1 py-3 text-sm font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-600 transition">Registrarse</button>
+        </div>
+
+        <!-- Form Login -->
+        <form id="form-login" onsubmit="handleLogin(event)" class="p-6 space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
+            <input id="l-user" required autocomplete="username"
+              class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Contrasena</label>
+            <input id="l-pass" type="password" required autocomplete="current-password"
+              class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none" />
+          </div>
+          <div id="login-error" class="hidden text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2"></div>
+          <button type="submit" class="w-full bg-brand-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-brand-700 transition">
+            Entrar
+          </button>
+        </form>
+
+        <!-- Form Registro -->
+        <form id="form-register" onsubmit="handleRegister(event)" class="hidden p-6 space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nombre completo</label>
+            <input id="r-nombre" required
+              class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
+            <input id="r-user" required autocomplete="username" minlength="4"
+              class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none" />
+            <p class="text-xs text-gray-400 mt-1">Minimo 4 caracteres. Solo letras, numeros y _</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Contrasena</label>
+            <input id="r-pass" type="password" required autocomplete="new-password" minlength="8" oninput="checkPasswordStrength(this.value)"
+              class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none" />
+            <div id="pass-strength" class="mt-2 hidden">
+              <div class="flex gap-1 mb-1">
+                <div id="str-1" class="h-1 flex-1 rounded bg-gray-200"></div>
+                <div id="str-2" class="h-1 flex-1 rounded bg-gray-200"></div>
+                <div id="str-3" class="h-1 flex-1 rounded bg-gray-200"></div>
+                <div id="str-4" class="h-1 flex-1 rounded bg-gray-200"></div>
+              </div>
+              <p id="str-text" class="text-xs text-gray-500"></p>
+            </div>
+            <ul class="text-xs text-gray-400 mt-1 space-y-0.5">
+              <li id="chk-length">Minimo 8 caracteres</li>
+              <li id="chk-upper">Una mayuscula</li>
+              <li id="chk-lower">Una minuscula</li>
+              <li id="chk-number">Un numero</li>
+              <li id="chk-special">Un caracter especial (!@#$%^&*)</li>
+            </ul>
+          </div>
+          <div id="register-error" class="hidden text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2"></div>
+          <button type="submit" class="w-full bg-brand-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-brand-700 transition">
+            Crear Cuenta
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ APP (oculta hasta login) ═══════════════════ -->
+  <div id="app-screen" class="hidden flex-1 flex flex-col">
+
+    <!-- NAVBAR -->
+    <nav class="bg-brand-700 text-white shadow-lg sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <a href="#" class="flex items-center gap-2 font-bold text-xl tracking-tight">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z" />
+            </svg>
+            VetCare
+          </a>
+
+          <div class="hidden md:flex items-center gap-1">
+            <button onclick="showSection('dashboard')" class="nav-link px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-600 transition">Dashboard</button>
+            <button onclick="showSection('propietarios')" class="nav-link px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-600 transition">Propietarios</button>
+            <button onclick="showSection('mascotas')" class="nav-link px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-600 transition">Mascotas</button>
+            <button onclick="showSection('citas')" class="nav-link px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-600 transition">Citas</button>
+            <button onclick="showSection('historial')" class="nav-link px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-600 transition">Historial</button>
+            <button onclick="showSection('inventario')" class="nav-link px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-600 transition">Inventario</button>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <span id="user-role" class="hidden sm:inline-block text-xs px-2 py-0.5 rounded-full font-medium"></span>
+            <span id="user-name" class="hidden sm:block text-xs text-brand-200"></span>
+            <button onclick="logout()" class="bg-brand-600 hover:bg-brand-500 px-3 py-1.5 rounded-lg text-xs font-medium transition">Salir</button>
+            <button class="md:hidden p-2 rounded-md hover:bg-brand-600 transition" onclick="toggleMenu()">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="mobileMenu" class="hidden md:hidden border-t border-brand-600 pb-3">
+        <div class="px-4 pt-2 space-y-1">
+          <button onclick="showSection('dashboard'); toggleMenu()" class="block w-full text-left px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-600 transition">Dashboard</button>
+          <button onclick="showSection('propietarios'); toggleMenu()" class="block w-full text-left px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-600 transition">Propietarios</button>
+          <button onclick="showSection('mascotas'); toggleMenu()" class="block w-full text-left px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-600 transition">Mascotas</button>
+          <button onclick="showSection('citas'); toggleMenu()" class="block w-full text-left px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-600 transition">Citas</button>
+          <button onclick="showSection('historial'); toggleMenu()" class="block w-full text-left px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-600 transition">Historial</button>
+          <button onclick="showSection('inventario'); toggleMenu()" class="block w-full text-left px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-600 transition">Inventario</button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- CONTENIDO -->
+    <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+
+      <!-- Dashboard -->
+      <section id="sec-dashboard" class="fade-in">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Panel Principal</h1>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+          <div class="bg-white rounded-xl shadow p-5 border-l-4 border-brand-500">
+            <p class="text-sm text-gray-500">Total Mascotas</p>
+            <p id="stat-mascotas" class="text-3xl font-bold text-gray-800">0</p>
+          </div>
+          <div class="bg-white rounded-xl shadow p-5 border-l-4 border-blue-500">
+            <p class="text-sm text-gray-500">Total Citas</p>
+            <p id="stat-citas" class="text-3xl font-bold text-gray-800">0</p>
+          </div>
+          <div class="bg-white rounded-xl shadow p-5 border-l-4 border-amber-500">
+            <p class="text-sm text-gray-500">Citas Hoy</p>
+            <p id="stat-hoy" class="text-3xl font-bold text-gray-800">0</p>
+          </div>
+          <div class="bg-white rounded-xl shadow p-5 border-l-4 border-purple-500">
+            <p class="text-sm text-gray-500">Propietarios</p>
+            <p id="stat-propietarios" class="text-3xl font-bold text-gray-800">0</p>
+          </div>
+          <div class="bg-white rounded-xl shadow p-5 border-l-4 border-teal-500">
+            <p class="text-sm text-gray-500">Historial Clinico</p>
+            <p id="stat-historial" class="text-3xl font-bold text-gray-800">0</p>
+          </div>
+          <div class="bg-white rounded-xl shadow p-5 border-l-4 border-rose-500">
+            <p class="text-sm text-gray-500">Stock Bajo</p>
+            <p id="stat-bajo-stock" class="text-3xl font-bold text-gray-800">0</p>
+          </div>
+        </div>
+        <h2 class="text-lg font-semibold text-gray-700 mb-3">Mascotas Registradas</h2>
+        <div id="dash-mascotas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8"></div>
+        <h2 class="text-lg font-semibold text-gray-700 mb-3">Proximas Citas</h2>
+        <div id="dash-citas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </section>
+
+      <!-- Propietarios -->
+      <section id="sec-propietarios" class="hidden fade-in">
+        <div class="flex items-center justify-between mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">Propietarios</h1>
+          <button onclick="openModal('propietario')" class="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-purple-700 transition">+ Nuevo Propietario</button>
+        </div>
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">ID</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Nombre</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Telefono</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Email</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Direccion</th>
+                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-propietarios" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Mascotas -->
+      <section id="sec-mascotas" class="hidden fade-in">
+        <div class="flex items-center justify-between mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">Mascotas</h1>
+          <button onclick="openModal('paciente')" class="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-brand-700 transition">+ Nueva Mascota</button>
+        </div>
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Nombre</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Especie</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Raza</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Edad</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Propietario</th>
+                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-mascotas" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Citas -->
+      <section id="sec-citas" class="hidden fade-in">
+        <div class="flex items-center justify-between mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">Citas</h1>
+          <button onclick="openModal('cita')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition">+ Nueva Cita</button>
+        </div>
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Mascota</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Motivo</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Estado</th>
+                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-citas" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Historial Clinico -->
+      <section id="sec-historial" class="hidden fade-in">
+        <div class="flex items-center justify-between mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">Historial Clinico</h1>
+          <button onclick="openModal('historial')" class="bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-teal-700 transition">+ Nueva Consulta</button>
+        </div>
+        <div class="mb-4 flex flex-wrap gap-3 items-center">
+          <label class="text-sm font-medium text-gray-700">Filtrar por mascota:</label>
+          <select id="h-filtro-paciente" onchange="loadHistorial()" class="border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none">
+            <option value="">Todas las mascotas</option>
+          </select>
+        </div>
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Mascota</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Motivo</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Diagnostico</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Tratamiento</th>
+                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-historial" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Inventario -->
+      <section id="sec-inventario" class="hidden fade-in">
+        <div class="flex items-center justify-between mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">Inventario</h1>
+          <button onclick="openModal('inventario')" class="bg-rose-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-rose-700 transition">+ Nuevo Articulo</button>
+        </div>
+        <div id="stock-alerta" class="hidden mb-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3"></div>
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Articulo</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Categoria</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Stock</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Precio Venta</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Proveedor</th>
+                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-inventario" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ═══════════════════ MODAL: Propietario ═══════════════════ -->
+  <div id="modal-propietario" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg fade-in">
+      <div class="flex items-center justify-between px-6 py-4 border-b">
+        <h2 class="text-lg font-bold text-gray-800">Registrar Propietario</h2>
+        <button onclick="closeModal('propietario')" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+      </div>
+      <form id="form-propietario" onsubmit="submitPropietario(event)" class="px-6 py-5 space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+            <input id="pr-nombre" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Telefono *</label>
+            <input id="pr-telefono" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input id="pr-email" type="email" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Direccion</label>
+            <input id="pr-direccion" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none" />
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" onclick="closeModal('propietario')" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-lg text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 transition">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ MODAL: Paciente ═══════════════════ -->
+  <div id="modal-paciente" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg fade-in">
+      <div class="flex items-center justify-between px-6 py-4 border-b">
+        <h2 class="text-lg font-bold text-gray-800">Registrar Mascota</h2>
+        <button onclick="closeModal('paciente')" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+      </div>
+      <form id="form-paciente" onsubmit="submitPaciente(event)" class="px-6 py-5 space-y-4">
+        <input type="hidden" id="p-id" />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+            <input id="p-nombre" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Especie *</label>
+            <select id="p-especie" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none">
+              <option value="">Seleccionar...</option>
+              <option>Perro</option><option>Gato</option><option>Ave</option>
+              <option>Reptil</option><option>Conejo</option><option>Otro</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Raza</label>
+            <input id="p-raza" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Edad</label>
+            <input id="p-edad" type="number" min="0" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Peso</label>
+            <input id="p-peso" placeholder="ej. 5.2 kg" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Propietario *</label>
+            <select id="p-propietario" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none">
+              <option value="">Seleccionar propietario...</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Notas</label>
+          <textarea id="p-notas" rows="2" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none resize-none"></textarea>
+        </div>
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" onclick="closeModal('paciente')" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-lg text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+      <!-- ═══════════════════ MODAL: Cita ═══════════════════ -->
+  <div id="modal-cita" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg fade-in">
+      <div class="flex items-center justify-between px-6 py-4 border-b">
+        <h2 class="text-lg font-bold text-gray-800">Nueva Cita</h2>
+        <button onclick="closeModal('cita')" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+      </div>
+      <form id="form-cita" onsubmit="submitCita(event)" class="px-6 py-5 space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Fecha y hora *</label>
+            <input id="c-fecha" type="datetime-local" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Paciente *</label>
+            <select id="c-paciente" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+              <option value="">Seleccionar paciente...</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Motivo *</label>
+          <input id="c-motivo" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Diagnostico</label>
+            <input id="c-diagnostico" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Tratamiento</label>
+            <input id="c-tratamiento" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" onclick="closeModal('cita')" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition">Agendar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ MODAL: Historial Clinico ═══════════════════ -->
+  <div id="modal-historial" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg fade-in">
+      <div class="flex items-center justify-between px-6 py-4 border-b">
+        <h2 class="text-lg font-bold text-gray-800">Registrar Consulta</h2>
+        <button onclick="closeModal('historial')" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+      </div>
+      <form id="form-historial" onsubmit="submitHistorial(event)" class="px-6 py-5 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Paciente *</label>
+          <select id="h-paciente" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none">
+            <option value="">Seleccionar paciente...</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Motivo de consulta *</label>
+          <input id="h-motivo" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Diagnostico *</label>
+          <textarea id="h-diagnostico" rows="2" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none resize-none"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Tratamiento</label>
+          <textarea id="h-tratamiento" rows="2" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none resize-none"></textarea>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Temperatura</label>
+            <input id="h-temperatura" placeholder="ej. 38.5" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Peso (kg)</label>
+            <input id="h-peso" type="number" step="0.1" min="0" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Proxima cita</label>
+            <input id="h-proxima-cita" type="datetime-local" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
+          <textarea id="h-observaciones" rows="2" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none resize-none"></textarea>
+        </div>
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" onclick="closeModal('historial')" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-lg text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 transition">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ MODAL: Inventario ═══════════════════ -->
+  <div id="modal-inventario" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg fade-in">
+      <div class="flex items-center justify-between px-6 py-4 border-b">
+        <h2 class="text-lg font-bold text-gray-800">Nuevo Articulo</h2>
+        <button onclick="closeModal('inventario')" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+      </div>
+      <form id="form-inventario" onsubmit="submitInventario(event)" class="px-6 py-5 space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+            <input id="i-nombre" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Categoria *</label>
+            <select id="i-categoria" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none">
+              <option value="">Seleccionar...</option>
+              <option>Medicamento</option><option>Vacuna</option><option>Alimento</option>
+              <option>Accesorio</option><option>Cirugia</option><option>Diagnostico</option><option>Otro</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Descripcion</label>
+          <input id="i-descripcion" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none" />
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Stock *</label>
+            <input id="i-stock" type="number" min="0" value="0" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Stock minimo</label>
+            <input id="i-stock-min" type="number" min="0" value="5" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">P. compra</label>
+            <input id="i-precio-comp" type="number" step="0.01" min="0" value="0" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">P. venta</label>
+            <input id="i-precio-vent" type="number" step="0.01" min="0" value="0" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none" />
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
+            <input id="i-proveedor" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Fecha caducidad</label>
+            <input id="i-caducidad" type="date" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none" />
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" onclick="closeModal('inventario')" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-lg text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 transition">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ MODAL: Ajustar Stock ═══════════════════ -->
+  <div id="modal-stock" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm fade-in">
+      <div class="flex items-center justify-between px-6 py-4 border-b">
+        <h2 class="text-lg font-bold text-gray-800">Ajustar Stock</h2>
+        <button onclick="closeModal('stock')" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+      </div>
+      <form onsubmit="submitStock(event)" class="px-6 py-5 space-y-4">
+        <input type="hidden" id="s-id" />
+        <p id="s-nombre" class="text-sm text-gray-600"></p>
+        <p id="s-actual" class="text-sm font-medium text-gray-800"></p>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Cantidad (+ entrada / - salida)</label>
+          <input id="s-cantidad" type="number" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none" />
+        </div>
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" onclick="closeModal('stock')" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-lg text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 transition">Aplicar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ TOAST ═══════════════════ -->
+  <div id="toast" class="hidden fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl shadow-lg text-sm font-medium text-white fade-in"></div>
+
+  <!-- ═══════════════════ JAVASCRIPT ═══════════════════ -->
+  <script>
+    const API = "";
+    let token = localStorage.getItem("vet_token") || null;
+    let currentUser = null;
+
+    // ── Auth ──────────────────────────────────────
+    function showAuthTab(tab) {
+      document.getElementById("tab-login").className = tab === "login"
+        ? "flex-1 py-3 text-sm font-semibold text-brand-700 border-b-2 border-brand-600 transition"
+        : "flex-1 py-3 text-sm font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-600 transition";
+      document.getElementById("tab-register").className = tab === "register"
+        ? "flex-1 py-3 text-sm font-semibold text-brand-700 border-b-2 border-brand-600 transition"
+        : "flex-1 py-3 text-sm font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-600 transition";
+      document.getElementById("form-login").classList.toggle("hidden", tab !== "login");
+      document.getElementById("form-register").classList.toggle("hidden", tab !== "register");
+      document.getElementById("login-error").classList.add("hidden");
+      document.getElementById("register-error").classList.add("hidden");
+    }
+
+    function showAuthError(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.classList.remove("hidden");
+    }
+
+    // ── Password strength checker ────────────────
+    function checkPasswordStrength(pw) {
+      const checks = {
+        length: pw.length >= 8,
+        upper: /[A-Z]/.test(pw),
+        lower: /[a-z]/.test(pw),
+        number: /\d/.test(pw),
+        special: /[!@#$%^&*(),.?":{}|<>]/.test(pw),
+      };
+      Object.entries(checks).forEach(([k, ok]) => {
+        const el = document.getElementById("chk-" + k);
+        if (el) el.className = ok ? "text-xs text-green-600" : "text-xs text-gray-400";
+      });
+      const score = Object.values(checks).filter(Boolean).length;
+      const str = document.getElementById("pass-strength");
+      str.classList.remove("hidden");
+      const colors = ["bg-red-500","bg-orange-500","bg-yellow-500","bg-green-500","bg-green-600"];
+      const labels = ["Muy debil","Debil","Regular","Fuerte","Muy fuerte"];
+      for (let i = 1; i <= 4; i++) {
+        document.getElementById("str-" + i).className = "h-1 flex-1 rounded " + (i <= score ? colors[Math.max(0, score - 1)] : "bg-gray-200");
+      }
+      document.getElementById("str-text").textContent = score > 0 ? labels[Math.max(0, score - 1)] : "";
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      document.getElementById("login-error").classList.add("hidden");
+      const body = new URLSearchParams();
+      body.append("username", document.getElementById("l-user").value);
+      body.append("password", document.getElementById("l-pass").value);
+      try {
+        const res = await fetch(API + "/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: body,
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          if (res.status === 429) throw new Error("Demasiados intentos. Espera 60 segundos.");
+          if (res.status === 423) { showAuthError("login-error", data.detail); document.getElementById("l-pass").value = ""; return; }
+          throw new Error(data.detail || "Error");
+        }
+        loginSuccess(data);
+      } catch (err) {
+        showAuthError("login-error", err.message);
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      document.getElementById("register-error").classList.add("hidden");
+      const body = {
+        username: document.getElementById("r-user").value.trim(),
+        password: document.getElementById("r-pass").value,
+        nombre: document.getElementById("r-nombre").value.trim(),
+      };
+      try {
+        const res = await fetch(API + "/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          if (res.status === 429) throw new Error("Demasiados registros. Espera un minuto.");
+          throw new Error(data.detail || (data.detail ? data.detail.join(", ") : "Error"));
+        }
+        loginSuccess(data);
+      } catch (err) {
+        showAuthError("register-error", err.message);
+      }
+    }
+
+    function loginSuccess(data) {
+      token = data.access_token;
+      currentUser = data.user;
+      localStorage.setItem("vet_token", token);
+      enterApp();
+    }
+
+    function logout() {
+      token = null;
+      currentUser = null;
+      localStorage.removeItem("vet_token");
+      document.getElementById("app-screen").classList.add("hidden");
+      document.getElementById("auth-screen").classList.remove("hidden");
+    }
+
+    async     function enterApp() {
+      document.getElementById("auth-screen").classList.add("hidden");
+      document.getElementById("app-screen").classList.remove("hidden");
+      document.getElementById("user-name").textContent = currentUser?.nombre || "";
+      const roleEl = document.getElementById("user-role");
+      if (currentUser?.rol === "admin") {
+        roleEl.textContent = "ADMIN";
+        roleEl.className = "hidden sm:inline-block text-xs px-2 py-0.5 rounded-full font-medium bg-red-100 text-red-700";
+      } else {
+        roleEl.textContent = "USUARIO";
+        roleEl.className = "hidden sm:inline-block text-xs px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700";
+      }
+      applyRoleRestrictions();
+      loadDashboard();
+    }
+
+    function applyRoleRestrictions() {
+      const isAdmin = currentUser?.rol === "admin";
+      document.querySelectorAll(".admin-only").forEach(el => {
+        el.style.display = isAdmin ? "" : "none";
+      });
+    }
+
+    async function tryAutoLogin() {
+      if (!token) return;
+      try {
+        const res = await fetch(API + "/auth/me", {
+          headers: { "Authorization": "Bearer " + token },
+        });
+        if (!res.ok) throw new Error();
+        currentUser = await res.json();
+        enterApp();
+      } catch {
+        logout();
+      }
+    }
+
+    // ── Helpers ──────────────────────────────────
+    function showToast(msg, ok = true) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.className = `fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl shadow-lg text-sm font-medium text-white fade-in ${ok ? "bg-brand-600" : "bg-red-500"}`;
+      setTimeout(() => t.classList.add("hidden"), 3000);
+    }
+
+    async function api(path, opts = {}) {
+      const headers = { "Content-Type": "application/json", ...opts.headers };
+      if (token) headers["Authorization"] = "Bearer " + token;
+      const res = await fetch(API + path, { ...opts, headers });
+      if (res.status === 401) { logout(); throw new Error("Sesion expirada"); }
+      if (res.status === 204) return null;
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Error desconocido");
+      return data;
+    }
+
+    // ── Navegacion ───────────────────────────────
+    const allSections = ["dashboard", "propietarios", "mascotas", "citas", "historial", "inventario"];
+
+    function showSection(name) {
+      allSections.forEach(s => {
+        document.getElementById("sec-" + s).classList.toggle("hidden", s !== name);
+      });
+      if (name === "dashboard") loadDashboard();
+      if (name === "propietarios") loadPropietariosTabla();
+      if (name === "mascotas") loadMascotas();
+      if (name === "citas") loadCitas();
+      if (name === "historial") loadHistorial();
+      if (name === "inventario") loadInventario();
+    }
+
+    function toggleMenu() {
+      document.getElementById("mobileMenu").classList.toggle("hidden");
+    }
+
+    // ── Modales ──────────────────────────────────
+    function openModal(tipo) {
+      document.getElementById("modal-" + tipo).classList.remove("hidden");
+      if (tipo === "paciente") fillPropietarioSelect();
+      if (tipo === "cita" || tipo === "historial") fillPacienteSelect(tipo === "historial" ? "h-paciente" : "c-paciente");
+      if (tipo === "historial") fillPacienteSelect("h-filtro-paciente", true);
+    }
+    function closeModal(tipo) {
+      document.getElementById("modal-" + tipo).classList.add("hidden");
+      document.getElementById("form-" + tipo).reset();
+    }
+
+    // ═══════════════════ PROPIETARIOS ═══════════════════
+
+    async function loadPropietariosTabla() {
+      try {
+        const data = await api("/propietarios");
+        const tb = document.getElementById("tabla-propietarios");
+        if (!data.length) {
+          tb.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400 text-sm">Sin registros. Crea un propietario primero.</td></tr>';
+          return;
+        }
+        tb.innerHTML = data.map(p => `
+          <tr class="hover:bg-gray-50 transition">
+            <td class="px-4 py-3 text-sm font-mono text-gray-500">${p.id}</td>
+            <td class="px-4 py-3 text-sm font-medium text-gray-800">${p.nombre}</td>
+            <td class="px-4 py-3 text-sm text-gray-600">${p.telefono}</td>
+            <td class="px-4 py-3 text-sm text-gray-600">${p.email || "-"}</td>
+            <td class="px-4 py-3 text-sm text-gray-600">${p.direccion || "-"}</td>
+            <td class="px-4 py-3 text-sm text-center">
+              <button onclick="deletePropietario(${p.id})" class="admin-only text-red-500 hover:text-red-700 font-medium transition">Eliminar</button>
+            </td>
+          </tr>
+        `).join("");
+      } catch (e) { showToast(e.message, false); }
+    }
+
+    async function submitPropietario(e) {
+      e.preventDefault();
+      const body = {
+        nombre: document.getElementById("pr-nombre").value,
+        telefono: document.getElementById("pr-telefono").value,
+        email: document.getElementById("pr-email").value || null,
+        direccion: document.getElementById("pr-direccion").value || null,
+      };
+      try {
+        await api("/propietarios", { method: "POST", body: JSON.stringify(body) });
+        showToast("Propietario registrado correctamente");
+        closeModal("propietario");
+        loadPropietariosTabla();
+      } catch (e) { showToast(e.message, false); }
+    }
+
+    async function deletePropietario(id) {
+      if (!confirm("Eliminar este propietario?")) return;
+      try {
+        await api("/propietarios/" + id, { method: "DELETE" });
+        showToast("Propietario eliminado");
+        loadPropietariosTabla();
+      } catch (e) { showToast(e.message, false); }
+    }
+
+    async function fillPropietarioSelect() {
+      const sel = document.getElementById("p-propietario");
+      sel.innerHTML = '<option value="">Cargando...</option>';
+      try {
+        const data = await api("/propietarios");
+        sel.innerHTML = '<option value="">Seleccionar propietario...</option>';
+        if (!data.length) {
+          sel.innerHTML += '<option disabled>No hay propietarios. Crea uno primero.</option>';
+          return;
+        }
+        data.forEach(p => {
+          sel.innerHTML += `<option value="${p.id}">#${p.id} - ${p.nombre}</option>`;
+        });
+      } catch (e) {
+        sel.innerHTML = '<option value="">Error al cargar</option>';
+      }
+    }
+
+    // ═══════════════════ DASHBOARD ═══════════════════
+
+    async function loadDashboard() {
+      try {
+        const [mascotas, citas, propietarios, histCount, invCount] = await Promise.all([
+          api("/pacientes"), api("/citas"), api("/propietarios"),
+          api("/historial/count"), api("/inventario/count"),
+        ]);
+        document.getElementById("stat-mascotas").textContent = mascotas.length;
+        document.getElementById("stat-citas").textContent = citas.length;
+        document.getElementById("stat-propietarios").textContent = propietarios.length;
+        document.getElementById("stat-historial").textContent = histCount.count;
+        document.getElementById("stat-bajo-stock").textContent = invCount.bajo_stock;
+        const hoy = new Date().toISOString().slice(0, 10);
+        document.getElementById("stat-hoy").textContent = citas.filter(c => c.fecha && c.fecha.startsWith(hoy)).length;
+        const propMap = {};
+        propietarios.forEach(p => propMap[p.id] = p.nombre);
+        const pacMap = {};
+        mascotas.forEach(m => pacMap[m.id] = m.nombre);
+        renderDashMascotas(mascotas.slice(0, 6), propMap);
+        renderDashCitas(citas.slice(0, 6), pacMap);
+      } catch (e) { console.error(e); }
+    }
+
+    function renderDashMascotas(lista, propMap = {}) {
+      const el = document.getElementById("dash-mascotas");
+      if (!lista.length) {
+        el.innerHTML = '<p class="text-gray-400 text-sm col-span-full">No hay mascotas registradas.</p>';
+        return;
+      }
+      const icons = { Perro: "\uD83D\uDC15", Gato: "\uD83D\uDC08", Ave: "\uD83D\uDC26", Reptil: "\uD83D\uDC98", Conejo: "\uD83D\uDC07" };
+      el.innerHTML = lista.map(m => `
+        <div class="bg-white rounded-xl shadow p-4 flex items-start gap-3 hover:shadow-md transition">
+          <span class="text-3xl">${icons[m.especie] || "\uD83D\uDC3E"}</span>
+          <div>
+            <p class="font-semibold text-gray-800">${m.nombre}</p>
+            <p class="text-sm text-gray-500">${m.especie}${m.raza ? " \u00B7 " + m.raza : ""}</p>
+            <p class="text-xs text-gray-400 mt-1">${propMap[m.propietario_id] || "Propietario #" + m.propietario_id}</p>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderDashCitas(lista, pacMap = {}) {
+      const el = document.getElementById("dash-citas");
+      if (!lista.length) {
+        el.innerHTML = '<p class="text-gray-400 text-sm col-span-full">No hay citas programadas.</p>';
+        return;
+      }
+      el.innerHTML = lista.map(c => {
+        const f = new Date(c.fecha);
+        const dia = f.toLocaleDateString("es-MX", { day: "2-digit", month: "short" });
+        const hora = f.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
+        const petName = pacMap[c.paciente_id] || "Paciente #" + c.paciente_id;
+        return `
+          <div class="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
+            <div class="flex items-center gap-3 mb-2">
+              <div class="bg-blue-100 text-blue-700 rounded-lg px-3 py-1 text-center">
+                <p class="text-xs font-medium uppercase">${dia}</p>
+                <p class="text-sm font-bold">${hora}</p>
+              </div>
+              <div>
+                <p class="font-semibold text-gray-800">${petName}</p>
+                <p class="text-sm text-gray-500">${c.motivo}</p>
+              </div>
+            </div>
+            ${c.whatsapp_link ? `<a href="${c.whatsapp_link}" target="_blank" class="inline-flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium mt-1"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492l4.638-1.468A11.935 11.935 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.82c-2.17 0-4.19-.624-5.913-1.69l-.422-.275-2.752.872.888-2.685-.293-.436A9.789 9.789 0 012.18 12c0-5.422 4.398-9.82 9.82-9.82 5.422 0 9.82 4.398 9.82 9.82 0 5.422-4.398 9.82-9.82 9.82z"/></svg> WhatsApp</a>` : ""}
+          </div>`;
+      }).join("");
+    }
+
+    // ═══════════════════ MASCOTAS ═══════════════════
+
+    async function loadMascotas() {
+      try {
+        const [mascotas, propietarios] = await Promise.all([api("/pacientes"), api("/propietarios")]);
+        const propMap = {};
+        propietarios.forEach(p => propMap[p.id] = p.nombre);
+        const tb = document.getElementById("tabla-mascotas");
+        if (!mascotas.length) {
+          tb.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400 text-sm">Sin registros</td></tr>';
+          return;
+        }
+        tb.innerHTML = mascotas.map(m => `
+          <tr class="hover:bg-gray-50 transition">
+            <td class="px-4 py-3 text-sm font-medium text-gray-800">${m.nombre}</td>
+            <td class="px-4 py-3 text-sm text-gray-600">${m.especie}</td>
+            <td class="px-4 py-3 text-sm text-gray-600">${m.raza || "-"}</td>
+            <td class="px-4 py-3 text-sm text-gray-600">${m.edad ?? "-"}</td>
+            <td class="px-4 py-3 text-sm text-gray-600">${propMap[m.propietario_id] || "#" + m.propietario_id}</td>
+            <td class="px-4 py-3 text-sm text-center space-x-2">
+              <button onclick="verHistorialMascota(${m.id})" class="text-teal-500 hover:text-teal-700 font-medium transition">Historial</button>
+              <button onclick="deletePaciente(${m.id})" class="admin-only text-red-500 hover:text-red-700 font-medium transition">Eliminar</button>
+            </td>
+          </tr>
+        `).join("");
+      } catch (e) { console.error(e); }
+    }
+
+    async function submitPaciente(e) {
+      e.preventDefault();
+      const body = {
+        nombre: document.getElementById("p-nombre").value,
+        especie: document.getElementById("p-especie").value,
+        raza: document.getElementById("p-raza").value || null,
+        edad: document.getElementById("p-edad").value ? parseInt(document.getElementById("p-edad").value) : null,
+        peso: document.getElementById("p-peso").value || null,
+        notas: document.getElementById("p-notas").value || null,
+        propietario_id: parseInt(document.getElementById("p-propietario").value),
+      };
+      try {
+        await api("/pacientes", { method: "POST", body: JSON.stringify(body) });
+        showToast("Mascota registrada correctamente");
+        closeModal("paciente");
+        showSection("mascotas");
+      } catch (e) { showToast(e.message, false); }
+    }
+
+    async function deletePaciente(id) {
+      if (!confirm("Eliminar esta mascota?")) return;
+      try {
+        await api("/pacientes/" + id, { method: "DELETE" });
+        showToast("Mascota eliminada");
+        loadMascotas();
+      } catch (e) { showToast(e.message, false); }
+    }
+
+    // ═══════════════════ CITAS ═══════════════════
+
+    async function loadCitas() {
+      try {
+        const [citas, mascotas] = await Promise.all([api("/citas"), api("/pacientes")]);
+        const pacMap = {};
+        mascotas.forEach(m => pacMap[m.id] = m.nombre);
+        const tb = document.getElementById("tabla-citas");
+        if (!citas.length) {
+          tb.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400 text-sm">Sin registros</td></tr>';
+          return;
+        }
+        tb.innerHTML = citas.map(c => {
+          const f = new Date(c.fecha);
+          const fecha = f.toLocaleString("es-MX", { dateStyle: "medium", timeStyle: "short" });
+          const petName = pacMap[c.paciente_id] || "Paciente #" + c.paciente_id;
+          const estado = c.estado || "Pendiente";
+          const badge = estado === "Confirmada"
+            ? '<span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">Confirmada</span>'
+            : '<span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Pendiente</span>';
+          const aprobarBtn = estado === "Pendiente"
+            ? `<button onclick="aprobarCita(${c.id})" class="admin-only text-green-500 hover:text-green-700 font-medium transition text-xs">Aprobar</button>`
+            : "";
+          const waBtn = c.whatsapp_link
+            ? `<a href="${c.whatsapp_link}" target="_blank" title="Enviar recordatorio por WhatsApp" class="text-green-500 hover:text-green-700 font-medium transition inline-flex items-center gap-1"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492l4.638-1.468A11.935 11.935 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.82c-2.17 0-4.19-.624-5.913-1.69l-.422-.275-2.752.872.888-2.685-.293-.436A9.789 9.789 0 012.18 12c0-5.422 4.398-9.82 9.82-9.82 5.422 0 9.82 4.398 9.82 9.82 0 5.422-4.398 9.82-9.82 9.82z"/></svg></a>`
+            : `<button onclick="notifWhatsApp(${c.id})" title="Enviar recordatorio" class="text-gray-400 hover:text-green-600 font-medium transition"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492l4.638-1.468A11.935 11.935 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.82c-2.17 0-4.19-.624-5.913-1.69l-.422-.275-2.752.872.888-2.685-.293-.436A9.789 9.789 0 012.18 12c0-5.422 4.398-9.82 9.82-9.82 5.422 0 9.82 4.398 9.82 9.82 0 5.422-4.398 9.82-9.82 9.82z"/></svg></button>`;
+          return `
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-4 py-3 text-sm text-gray-800">${fecha}</td>
+              <td class="px-4 py-3 text-sm text-gray-600">${petName}</td>
+              <td class="px-4 py-3 text-sm text-gray-600">${c.motivo}</td>
+              <td class="px-4 py-3 text-sm">${badge}</td>
+              <td class="px-4 py-3 text-sm text-center space-x-2">
+                ${waBtn}
+                ${aprobarBtn}
+                <button onclick="deleteCita(${c.id})" class="admin-only text-red-500 hover:text-red-700 font-medium transition">Eliminar</button>
+              </td>
+            </tr>`;
+        }).join("");
+        applyRoleRestrictions();
+      } catch (e) { console.error(e); }
+    }
+
+    async function submitCita(e) {
+      e.preventDefault();
+      const body = {
+        fecha: new Date(document.getElementById("c-fecha").value).toISOString(),
+        motivo: document.getElementById("c-motivo").value,
+        diagnostico: document.getElementById("c-diagnostico").value || null,
+        tratamiento: document.getElementById("c-tratamiento").value || null,
+        paciente_id: parseInt(document.getElementById("c-paciente").value),
+      };
+      try {
+        await api("/citas", { method: "POST", body: JSON.stringify(body) });
+        showToast("Cita agendada correctamente");
+        closeModal("cita");
+        showSection("citas");
+      } catch (e) { showToast(e.message, false); }
+    }
+
+    async function deleteCita(id) {
+      if (!confirm("Eliminar esta cita?")) return;
+      try {
+        await api("/citas/" + id, { method: "DELETE" });
+        showToast("Cita eliminada");
+        loadCitas();
+      } catch (e) { showToast(e.message, false); }
+    }
+
+    async function aprobarCita(id) {
+      try {
+        await api("/citas/" + id + "/aprobar", { method: "POST" });
+        showToast("Cita aprobada correctamente");
+        loadCitas();
+      } catch (e) { showToast(e.message, false); }
+    }
+
+    // ═══════════════════ PACIENTE SELECT HELPER ═══════════════════
+
+    async function fillPacienteSelect(selectId, withAll = false) {
+      const sel = document.getElementById(selectId);
+      if (!sel) return;
+      sel.innerHTML = '<option value="">Cargando...</option>';
+      try {
+        const [mascotas, propietarios] = await Promise.all([api("/pacientes"), api("/propietarios")]);
+        const propMap = {};
+        propietarios.forEach(p => propMap[p.id] = p.nombre);
+        let html = withAll ? '<option value="">Todas las mascotas</option>' : '<option value="">Seleccionar paciente...</option>';
+        if (!mascotas.length) {
+          html += '<option disabled>No hay mascotas. Crea una primero.</option>';
+        } else {
+          mascotas.forEach(m => {
+            html += `<option value="${m.id}">${m.nombre} (${propMap[m.propietario_id] || "Sin propietario"})</option>`;
+          });
+        }
+        sel.innerHTML = html;
+      } catch (e) {
+        sel.innerHTML = '<option value="">Error al cargar</option>';
+      }
+    }
+
+    // ═══════════════════ WHATSAPP ═══════════════════
+
+    async function notifWhatsApp(citaId) {
+      try {
+        const res = await api("/citas/" + citaId + "/whatsapp-notificar", { method: "POST" });
+        if (res.whatsapp_link) {
+          window.open(res.whatsapp_link, "_blank");
+          showToast("Notificacion enviada por WhatsApp");
+          loadCitas();
+        }
+      } catch (e) { showToast(e.message, false); }
+    }
+
+    // ═══════════════════ HISTORIAL CLINICO ═══════════════════
+
+    async function loadHistorial() {
+      try {
+        const filtro = document.getElementById("h-filtro-paciente")?.value || "";
+        const [mascotas, propietarios] = await Promise.all([api("/pacientes"), api("/propietarios")]);
+        const pacMap = {}, propMap = {};
+        mascotas.forEach(m => pacMap[m.id] = m.nombre);
+        propietarios.forEach(p => propMap[p.id] = p.nombre);
+
+        let registros = [];
+        if (filtro) {
+          registros = await api("/pacientes/" + filtro + "/historial");
+        } else {
+          const proms = mascotas.map(m => api("/pacientes/" + m.id + "/historial").catch(() => []));
+          const results = await Promise.all(proms);
+          registros = results.flat().sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+        }
+
+        const tb = document.getElementById("tabla-historial");
+        if (!registros.length) {
+          tb.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400 text-sm">Sin registros de historial clinico</td></tr>';
+          return;
+        }
+
+        if (!filtro) await fillPacienteSelect("h-filtro-paciente", true);
+
+        tb.innerHTML = registros.map(h => {
+          const f = new Date(h.fecha);
+          const fecha = f.toLocaleString("es-MX", { dateStyle: "medium", timeStyle: "short" });
+          return `
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-4 py-3 text-sm text-gray-800">${fecha}</td>
+              <td class="px-4 py-3 text-sm text-gray-600">${pacMap[h.paciente_id] || "#" + h.paciente_id}</td>
+              <td class="px-4 py-3 text-sm text-gray-600">${h.motivo_consulta}</td>
+              <td class="px-4 py-3 text-sm text-gray-600">${h.diagnostico}</td>
+              <td class="px-4 py-3 text-sm text-gray-600">${h.tratamiento || "-"}</td>
+              <td class="px-4 py-3 text-sm text-center">
+                <button onclick="deleteHistorial(${h.id})" class="admin-only text-red-500 hover:text-red-700 font-medium transition">Eliminar</button>
+              </td>
+            </tr>`;
+        }).join("");
+      } catch (e) { console.error(e); }
+    }
+
+    async function submitHistorial(e) {
+      e.preventDefault();
+      const prox = document.getElementById("h-proxima-cita").value;
+      const body = {
+        motivo_consulta: document.getElementById("h-motivo").value,
+        diagnostico: document.getElementById("h-diagnostico").value,
+        tratamiento: document.getElementById("h-tratamiento").value || null,
+        observaciones: document.getElementById("h-observaciones").value || null,
+        temperatura: document.getElementById("h-temperatura").value || null,
+        peso_kg: document.getElementById("h-peso").value ? parseFloat(document.getElementById("h-peso").value) : null,
+        proxima_cita: prox ? new Date(prox).toISOString() : null,
+      };
+      const pacienteId = document.getElementById("h-paciente").value;
+      if (!pacienteId) { showToast("Selecciona un paciente", false); return; }
+      try {
+        await api("/pacientes/" + pacienteId + "/historial", { method: "POST", body: JSON.stringify(body) });
+        showToast("Consulta registrada correctamente");
+        closeModal("historial");
+        showSection("historial");
+      } catch (e) { showToast(e.message, false); }
+    }
+
+    function verHistorialMascota(pacienteId) {
+      showSection("historial");
+      setTimeout(() => {
+        const sel = document.getElementById("h-filtro-paciente");
+        if (sel) { sel.value = pacienteId; loadHistorial(); }
+      }, 300);
+    }
+
+    async function deleteHistorial(id) {
+      if (!confirm("Eliminar este registro del historial?")) return;
+      try {
+        await api("/historial/" + id, { method: "DELETE" });
+        showToast("Registro eliminado");
+        loadHistorial();
+      } catch (e) { showToast(e.message, false); }
+    }
+
+    // ═══════════════════ INVENTARIO ═══════════════════
+
+    async function loadInventario() {
+      try {
+        const items = await api("/inventario");
+        const bajoStock = items.filter(i => i.stock <= i.stock_minimo);
+        const alerta = document.getElementById("stock-alerta");
+        if (bajoStock.length) {
+          alerta.textContent = `Atencion: ${bajoStock.length} articulo(s) con stock bajo: ${bajoStock.map(i => i.nombre).join(", ")}`;
+          alerta.classList.remove("hidden");
+        } else {
+          alerta.classList.add("hidden");
+        }
+
+        const tb = document.getElementById("tabla-inventario");
+        if (!items.length) {
+          tb.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400 text-sm">Inventario vacio</td></tr>';
+          return;
+        }
+        tb.innerHTML = items.map(i => {
+          const stockClass = i.stock <= i.stock_minimo ? "text-red-600 font-bold" : "text-gray-800";
+          return `
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-4 py-3 text-sm font-medium text-gray-800">${i.nombre}</td>
+              <td class="px-4 py-3 text-sm text-gray-600">${i.categoria}</td>
+              <td class="px-4 py-3 text-sm ${stockClass}">${i.stock} <span class="text-xs text-gray-400">(min: ${i.stock_minimo})</span></td>
+              <td class="px-4 py-3 text-sm text-gray-600">$${i.precio_venta.toFixed(2)}</td>
+              <td class="px-4 py-3 text-sm text-gray-600">${i.proveedor || "-"}</td>
+              <td class="px-4 py-3 text-sm text-center space-x-2">
+                <button onclick="openStockModal(${i.id}, '${i.nombre.replace(/'/g, "\\'")}', ${i.stock})" class="text-amber-500 hover:text-amber-700 font-medium transition">Stock</button>
+                <button onclick="deleteInventario(${i.id})" class="admin-only text-red-500 hover:text-red-700 font-medium transition">Eliminar</button>
+              </td>
+            </tr>`;
+        }).join("");
+      } catch (e) { console.error(e); }
+    }
+
+    async function submitInventario(e) {
+      e.preventDefault();
+      const body = {
+        nombre: document.getElementById("i-nombre").value,
+        categoria: document.getElementById("i-categoria").value,
+        descripcion: document.getElementById("i-descripcion").value || null,
+        stock: parseInt(document.getElementById("i-stock").value) || 0,
+        stock_minimo: parseInt(document.getElementById("i-stock-min").value) || 5,
+        precio_compra: parseFloat(document.getElementById("i-precio-comp").value) || 0,
+        precio_venta: parseFloat(document.getElementById("i-precio-vent").value) || 0,
+        proveedor: document.getElementById("i-proveedor").value || null,
+        fecha_caducidad: document.getElementById("i-caducidad").value || null,
+      };
+      try {
+        await api("/inventario", { method: "POST", body: JSON.stringify(body) });
+        showToast("Articulo registrado correctamente");
+        closeModal("inventario");
+        loadInventario();
+      } catch (e) { showToast(e.message, false); }
+    }
+
+    function openStockModal(id, nombre, stock) {
+      document.getElementById("modal-stock").classList.remove("hidden");
+      document.getElementById("s-id").value = id;
+      document.getElementById("s-nombre").textContent = nombre;
+      document.getElementById("s-actual").textContent = "Stock actual: " + stock;
+      document.getElementById("s-cantidad").value = "";
+    }
+
+    async function submitStock(e) {
+      e.preventDefault();
+      const id = document.getElementById("s-id").value;
+      const cantidad = parseInt(document.getElementById("s-cantidad").value);
+      try {
+        await api("/inventario/" + id + "/stock", { method: "POST", body: JSON.stringify({ cantidad }) });
+        showToast("Stock actualizado");
+        closeModal("stock");
+        loadInventario();
+      } catch (e) { showToast(e.message, false); }
+    }
+
+    async function deleteInventario(id) {
+      if (!confirm("Eliminar este articulo del inventario?")) return;
+      try {
+        await api("/inventario/" + id, { method: "DELETE" });
+        showToast("Articulo eliminado");
+        loadInventario();
+      } catch (e) { showToast(e.message, false); }
+    }
+
+    // ── Init ─────────────────────────────────────
+    tryAutoLogin();
+  </script>
+
+</body>
+</html>
