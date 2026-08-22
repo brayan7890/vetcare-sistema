@@ -1,4 +1,10 @@
-<!DOCTYPE html>
+import os
+
+OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend", "index.html")
+
+parts = []
+
+parts.append("""<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
@@ -28,7 +34,9 @@
 </form>
 <p class="text-xs text-gray-400 text-center mt-4">Solo administradores pueden crear cuentas</p>
 </div></div></div>
+""")
 
+parts.append("""
 <div id="app-screen" class="hidden flex-1 flex flex-col">
 <nav class="bg-brand-700 text-white shadow-lg sticky top-0 z-50 no-print">
 <div class="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
@@ -43,7 +51,10 @@
 <div id="mobile-nav" class="hidden lg:hidden border-t border-brand-600 pb-3 px-4 pt-2 space-y-1"></div>
 </nav>
 <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+""")
 
+# DASHBOARD
+parts.append("""
 <section id="sec-dashboard" class="fade-in">
 <h1 class="text-2xl font-bold text-gray-800 mb-6">Panel Principal</h1>
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8" id="dash-stats"></div>
@@ -52,7 +63,10 @@
 <h2 class="text-lg font-semibold text-gray-700 mb-3">Proximas Citas</h2>
 <div id="dash-citas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
 </section>
+""")
 
+# USUARIOS
+parts.append("""
 <section id="sec-usuarios" class="hidden fade-in admin-section">
 <div class="flex items-center justify-between mb-6">
 <h1 class="text-2xl font-bold text-gray-800">Gestion de Usuarios</h1>
@@ -68,7 +82,10 @@
 <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Acciones</th>
 </tr></thead><tbody id="tabla-usuarios" class="divide-y divide-gray-100"></tbody></table>
 </div></section>
+""")
 
+# PROPIETARIOS
+parts.append("""
 <section id="sec-propietarios" class="hidden fade-in">
 <div class="flex items-center justify-between mb-6">
 <h1 class="text-2xl font-bold text-gray-800">Propietarios</h1>
@@ -84,7 +101,10 @@
 <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Acciones</th>
 </tr></thead><tbody id="tabla-propietarios" class="divide-y divide-gray-100"></tbody></table>
 </div></section>
+""")
 
+# MASCOTAS
+parts.append("""
 <section id="sec-mascotas" class="hidden fade-in">
 <div class="flex items-center justify-between mb-6">
 <h1 class="text-2xl font-bold text-gray-800">Mascotas</h1>
@@ -101,7 +121,10 @@
 <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Acciones</th>
 </tr></thead><tbody id="tabla-mascotas" class="divide-y divide-gray-100"></tbody></table>
 </div></section>
+""")
 
+# CITAS
+parts.append("""
 <section id="sec-citas" class="hidden fade-in">
 <div class="flex items-center justify-between mb-6">
 <h1 class="text-2xl font-bold text-gray-800">Citas</h1>
@@ -116,7 +139,10 @@
 <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Acciones</th>
 </tr></thead><tbody id="tabla-citas" class="divide-y divide-gray-100"></tbody></table>
 </div></section>
+""")
 
+# HISTORIAL
+parts.append("""
 <section id="sec-historial" class="hidden fade-in vet-section">
 <div class="flex items-center justify-between mb-6">
 <h1 class="text-2xl font-bold text-gray-800">Historial Clinico</h1>
@@ -136,7 +162,10 @@
 <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Acciones</th>
 </tr></thead><tbody id="tabla-historial" class="divide-y divide-gray-100"></tbody></table>
 </div></section>
+""")
 
+# INVENTARIO
+parts.append("""
 <section id="sec-inventario" class="hidden fade-in">
 <div class="flex items-center justify-between mb-6">
 <h1 class="text-2xl font-bold text-gray-800">Inventario</h1>
@@ -153,7 +182,10 @@
 <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Acciones</th>
 </tr></thead><tbody id="tabla-inventario" class="divide-y divide-gray-100"></tbody></table>
 </div></section>
+""")
 
+# FACTURACION
+parts.append("""
 <section id="sec-facturacion" class="hidden fade-in billing-section">
 <div class="flex items-center justify-between mb-6">
 <h1 class="text-2xl font-bold text-gray-800">Facturacion</h1>
@@ -172,7 +204,10 @@
 <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Acciones</th>
 </tr></thead><tbody id="tabla-comprobantes" class="divide-y divide-gray-100"></tbody></table>
 </div></section>
+""")
 
+# MODALS
+parts.append("""
 </main></div>
 
 <div id="modal-usuario" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg fade-in">
@@ -243,7 +278,9 @@
 <button type="button" onclick="closeModal('cita')" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
 <button type="submit" class="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg">Agendar</button>
 </div></form></div></div>
+""")
 
+parts.append("""
 <div id="modal-historial" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg fade-in">
 <div class="flex items-center justify-between px-6 py-4 border-b"><h2 class="text-lg font-bold">Nueva Consulta</h2><button onclick="closeModal('historial')" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button></div>
 <form id="form-historial" onsubmit="submitHistorial(event)" class="px-6 py-5 space-y-4">
@@ -298,7 +335,10 @@
 <button type="button" onclick="closeModal('stock')" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
 <button type="submit" class="px-5 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg">Aplicar</button>
 </div></form></div></div>
+""")
 
+# MODALS: Servicio + Comprobante
+parts.append("""
 <div id="modal-servicio" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-md fade-in">
 <div class="flex items-center justify-between px-6 py-4 border-b"><h2 class="text-lg font-bold">Nuevo Servicio/Producto</h2><button onclick="closeModal('servicio')" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button></div>
 <form id="form-servicio" onsubmit="submitServicio(event)" class="px-6 py-5 space-y-4">
@@ -338,7 +378,16 @@
 <button type="button" onclick="closeModal('comprobante')" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
 <button type="submit" class="px-5 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg">Generar</button>
 </div></form></div></div>
+""")
 
+# TOAST + SCRIPTS
+parts.append("""
 <div id="toast" class="hidden fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl shadow-lg text-sm font-medium text-white fade-in"></div>
 <script src="/static/app.js"></script>
 </body></html>
+""")
+
+with open(OUT, "w", encoding="utf-8") as f:
+    f.write("".join(parts))
+
+print(f"Written {os.path.getsize(OUT)} bytes to {OUT}")

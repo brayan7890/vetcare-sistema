@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Float
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Float, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 
@@ -13,8 +13,10 @@ class Propietario(Base):
     telefono = Column(String(20), nullable=False)
     email = Column(String(100))
     direccion = Column(String(200))
+    ruc_dni = Column(String(20))
 
     mascotas = relationship("Paciente", back_populates="propietario")
+    comprobantes = relationship("ComprobantePago", back_populates="propietario")
 
 
 class Paciente(Base):
@@ -24,8 +26,10 @@ class Paciente(Base):
     nombre = Column(String(100), nullable=False)
     especie = Column(String(50), nullable=False)
     raza = Column(String(50))
-    edad = Column(Integer)
-    peso = Column(String(20))
+    fecha_nacimiento = Column(String(20))
+    sexo = Column(String(10))
+    esterilizado = Column(Boolean, default=False)
+    peso = Column(Float)
     notas = Column(Text)
     propietario_id = Column(Integer, ForeignKey("propietarios.id"), nullable=False)
 
@@ -43,10 +47,12 @@ class Cita(Base):
     diagnostico = Column(Text)
     tratamiento = Column(Text)
     paciente_id = Column(Integer, ForeignKey("pacientes.id"), nullable=False)
+    veterinario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=True)
     notificado_whatsapp = Column(Integer, nullable=False, default=0)
     estado = Column(String(20), nullable=False, default="Pendiente")
 
     paciente = relationship("Paciente", back_populates="citas")
+    veterinario = relationship("Usuario", foreign_keys=[veterinario_id])
 
 
 class HistorialClinico(Base):
@@ -59,11 +65,14 @@ class HistorialClinico(Base):
     tratamiento = Column(Text)
     observaciones = Column(Text)
     temperatura = Column(String(10))
+    frecuencia_cardiaca = Column(String(20))
     peso_kg = Column(Float)
     proxima_cita = Column(DateTime)
     paciente_id = Column(Integer, ForeignKey("pacientes.id"), nullable=False)
+    veterinario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=True)
 
     paciente = relationship("Paciente", back_populates="historial")
+    veterinario = relationship("Usuario", foreign_keys=[veterinario_id])
 
 
 class Inventario(Base):
@@ -88,6 +97,54 @@ class Usuario(Base):
     username = Column(String(50), unique=True, nullable=False, index=True)
     hashed_password = Column(String(200), nullable=False)
     nombre = Column(String(100), nullable=False)
-    rol = Column(String(20), nullable=False, default="usuario")
+    rol = Column(String(20), nullable=False, default="recepcionista")
     intentos_fallidos = Column(Integer, nullable=False, default=0)
     bloqueado = Column(Integer, nullable=False, default=0)
+
+
+class ServicioProducto(Base):
+    __tablename__ = "servicios_productos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nombre = Column(String(150), nullable=False)
+    precio = Column(Float, nullable=False, default=0.0)
+    tipo = Column(String(20), nullable=False, default="servicio")
+    activo = Column(Boolean, nullable=False, default=True)
+
+    detalles = relationship("DetalleComprobante", back_populates="servicio_producto")
+
+
+class ComprobantePago(Base):
+    __tablename__ = "comprobantes_pago"
+
+    id = Column(Integer, primary_key=True, index=True)
+    serie = Column(String(10), nullable=False)
+    numero = Column(Integer, nullable=False)
+    tipo_documento = Column(String(20), nullable=False, default="boleta")
+    fecha_emision = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    cliente_nombre = Column(String(150), nullable=False)
+    cliente_ruc_dni = Column(String(20))
+    subtotal = Column(Float, nullable=False, default=0.0)
+    igv = Column(Float, nullable=False, default=0.0)
+    total = Column(Float, nullable=False, default=0.0)
+    estado = Column(String(20), nullable=False, default="Pagado")
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=True)
+    propietario_id = Column(Integer, ForeignKey("propietarios.id"), nullable=True)
+
+    propietario = relationship("Propietario", back_populates="comprobantes")
+    usuario = relationship("Usuario")
+    detalles = relationship("DetalleComprobante", back_populates="comprobante", cascade="all, delete-orphan")
+
+
+class DetalleComprobante(Base):
+    __tablename__ = "detalles_comprobante"
+
+    id = Column(Integer, primary_key=True, index=True)
+    comprobante_id = Column(Integer, ForeignKey("comprobantes_pago.id"), nullable=False)
+    servicio_producto_id = Column(Integer, ForeignKey("servicios_productos.id"), nullable=False)
+    cantidad = Column(Integer, nullable=False, default=1)
+    precio_unitario = Column(Float, nullable=False, default=0.0)
+    subtotal = Column(Float, nullable=False, default=0.0)
+
+    comprobante = relationship("ComprobantePago", back_populates="detalles")
+    servicio_producto = relationship("ServicioProducto", back_populates="detalles")

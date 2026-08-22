@@ -1,0 +1,4 @@
+.fade-in{animation:fadeIn .25s ease-out}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@media print{.no-print{display:none!important}body{background:#fff!important}.print-box{box-shadow:none!important;border:none!important;padding:10px!important}}
+@media print{.print-receipt{font-family:monospace;font-size:12px;max-width:300px;margin:0 auto}.print-receipt .receipt-line{border-top:1px dashed #333;margin:4px 0}.print-receipt .receipt-center{text-align:center}.print-receipt .receipt-bold{font-weight:bold}.print-receipt .receipt-row{display:flex;justify-content:space-between}}
