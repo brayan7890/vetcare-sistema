@@ -15,72 +15,11 @@ from dependencies import create_access_token, hash_password, verify_password
 
 load_dotenv()
 
-# -- Create tables + sync schema --
+# -- Reset completo de esquema DB --
+print(">>> Recreando tablas...")
+Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
-
-
-def _sync_schema():
-    """Add missing columns to existing tables (safe for SQLite & PostgreSQL)."""
-    from sqlalchemy import text, inspect as sa_inspect
-
-    is_pg = "postgresql" in str(engine.url)
-    insp = sa_inspect(engine)
-
-    migrations = {
-        "propietarios": [
-            ("direccion", "VARCHAR(200)", "VARCHAR(200)"),
-            ("ruc_dni", "VARCHAR(20)", "VARCHAR(20)"),
-        ],
-        "pacientes": [
-            ("fecha_nacimiento", "VARCHAR(20)", "VARCHAR(20)"),
-            ("sexo", "VARCHAR(10)", "VARCHAR(10)"),
-            ("esterilizado", "BOOLEAN DEFAULT 0", "BOOLEAN DEFAULT FALSE"),
-            ("peso", "FLOAT", "DOUBLE PRECISION"),
-            ("notas", "TEXT", "TEXT"),
-        ],
-        "citas": [
-            ("veterinario_id", "INTEGER", "INTEGER"),
-            ("notificado_whatsapp", "INTEGER DEFAULT 0", "INTEGER DEFAULT 0"),
-            ("estado", "VARCHAR(20) DEFAULT 'Pendiente'", "VARCHAR(20) DEFAULT 'Pendiente'"),
-        ],
-        "historial_clinico": [
-            ("observaciones", "TEXT", "TEXT"),
-            ("frecuencia_cardiaca", "VARCHAR(20)", "VARCHAR(20)"),
-            ("peso_kg", "FLOAT", "DOUBLE PRECISION"),
-            ("proxima_cita", "DATETIME", "TIMESTAMP"),
-            ("veterinario_id", "INTEGER", "INTEGER"),
-        ],
-        "inventario": [
-            ("descripcion", "TEXT", "TEXT"),
-            ("fecha_caducidad", "VARCHAR(20)", "VARCHAR(20)"),
-        ],
-        "usuarios": [
-            ("intentos_fallidos", "INTEGER DEFAULT 0", "INTEGER DEFAULT 0"),
-            ("bloqueado", "INTEGER DEFAULT 0", "INTEGER DEFAULT 0"),
-        ],
-        "servicios_productos": [],
-        "comprobantes_pago": [],
-        "detalles_comprobante": [],
-    }
-
-    with engine.connect() as conn:
-        for table, columns in migrations.items():
-            if table not in insp.get_table_names():
-                continue
-            existing = {c["name"] for c in insp.get_columns(table)}
-            for col_name, sqlite_type, pg_type in columns:
-                if col_name in existing:
-                    continue
-                col_type = pg_type if is_pg else sqlite_type
-                try:
-                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col_name} {col_type}"))
-                    conn.commit()
-                    print(f">>> Migration: added {table}.{col_name}")
-                except Exception:
-                    pass
-
-
-_sync_schema()
+print(">>> Tablas creadas correctamente.")
 
 app = FastAPI(title="Veterinaria API", version="4.0.0")
 
