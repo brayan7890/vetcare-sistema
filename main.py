@@ -17,6 +17,57 @@ load_dotenv()
 
 Base.metadata.create_all(bind=engine)
 
+# -- Migration: add missing columns to existing tables --
+from sqlalchemy import text, inspect as sa_inspect
+
+def _migrate_columns():
+    with engine.connect() as conn:
+        insp = sa_inspect(engine)
+        migrations = {
+            "propietarios": [
+                ("direccion", "VARCHAR(200)"),
+                ("ruc_dni", "VARCHAR(20)"),
+            ],
+            "pacientes": [
+                ("fecha_nacimiento", "VARCHAR(20)"),
+                ("sexo", "VARCHAR(10)"),
+                ("esterilizado", "BOOLEAN DEFAULT 0"),
+                ("peso", "FLOAT"),
+                ("notas", "TEXT"),
+            ],
+            "citas": [
+                ("veterinario_id", "INTEGER"),
+                ("notificado_whatsapp", "INTEGER DEFAULT 0"),
+                ("estado", "VARCHAR(20) DEFAULT 'Pendiente'"),
+            ],
+            "historial_clinico": [
+                ("observaciones", "TEXT"),
+                ("frecuencia_cardiaca", "VARCHAR(20)"),
+                ("peso_kg", "FLOAT"),
+                ("proxima_cita", "DATETIME"),
+                ("veterinario_id", "INTEGER"),
+            ],
+            "inventario": [
+                ("descripcion", "TEXT"),
+                ("fecha_caducidad", "VARCHAR(20)"),
+            ],
+            "servicios_productos": [],
+            "comprobantes_pago": [],
+            "detalles_comprobante": [],
+        }
+        for table, columns in migrations.items():
+            existing = {c["name"] for c in insp.get_columns(table)} if table in insp.get_table_names() else set()
+            for col_name, col_type in columns:
+                if col_name not in existing:
+                    try:
+                        conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col_name} {col_type}"))
+                        conn.commit()
+                        print(f">>> Migration: added {table}.{col_name}")
+                    except Exception:
+                        pass
+
+_migrate_columns()
+
 app = FastAPI(title="Veterinaria API", version="4.0.0")
 
 # -- Rate limiter --
