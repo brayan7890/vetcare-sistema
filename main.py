@@ -71,6 +71,14 @@ def seed_admin():
             db.add(admin)
             db.commit()
             print(">>> Admin user created: admin / Admin123!")
+        else:
+            admin = db.query(Usuario).filter(Usuario.username == "admin").first()
+            if admin:
+                admin.hashed_password = hash_password("Admin123!")
+                admin.intentos_fallidos = 0
+                admin.bloqueado = False
+                db.commit()
+                print(">>> Admin user reset: admin / Admin123!")
     finally:
         db.close()
 
