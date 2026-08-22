@@ -76,7 +76,7 @@ def seed_admin():
             if admin:
                 admin.hashed_password = hash_password("Admin123!")
                 admin.intentos_fallidos = 0
-                admin.bloqueado = False
+                admin.bloqueado = 0
                 db.commit()
                 print(">>> Admin user reset: admin / Admin123!")
     finally:
