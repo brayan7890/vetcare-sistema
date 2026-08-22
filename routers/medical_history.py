@@ -21,6 +21,15 @@ def listar_historial(pid: int, db: Session = Depends(get_db), _u: Usuario = Depe
     )
 
 
+@router.get("/historial")
+def listar_historial_global(db: Session = Depends(get_db), _u: Usuario = Depends(get_current_active_user)):
+    return (
+        db.query(HistorialClinico)
+        .order_by(HistorialClinico.fecha.desc())
+        .all()
+    )
+
+
 @router.get("/historial/count")
 def contar_historial(db: Session = Depends(get_db), _u: Usuario = Depends(get_current_active_user)):
     return {"count": db.query(HistorialClinico).count()}
