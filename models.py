@@ -70,6 +70,7 @@ class HistorialClinico(Base):
     proxima_cita = Column(DateTime)
     paciente_id = Column(Integer, ForeignKey("pacientes.id"), nullable=False)
     veterinario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=True)
+    comprobante_id = Column(Integer, ForeignKey("comprobantes_pago.id"), nullable=True)
 
     paciente = relationship("Paciente", back_populates="historial")
     veterinario = relationship("Usuario", foreign_keys=[veterinario_id])

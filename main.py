@@ -48,6 +48,7 @@ def _sync_schema():
             ("peso_kg", "FLOAT", "DOUBLE PRECISION"),
             ("proxima_cita", "DATETIME", "TIMESTAMP"),
             ("veterinario_id", "INTEGER", "INTEGER"),
+            ("comprobante_id", "INTEGER", "INTEGER"),
         ],
         "inventario": [
             ("descripcion", "TEXT", "TEXT"),

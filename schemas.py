@@ -134,6 +134,7 @@ class HistorialResponse(HistorialCreate):
     id: int
     fecha: datetime
     paciente_id: int
+    comprobante_id: int | None = None
 
 
 # -- Inventario --

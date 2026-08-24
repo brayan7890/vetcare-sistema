@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import HistorialClinico, Paciente, Usuario
+from models import HistorialClinico, Paciente, Usuario, ComprobantePago
 from schemas import HistorialCreate, HistorialResponse
 from dependencies import get_current_active_user, require_admin, require_veterinario
 
@@ -68,3 +68,20 @@ def eliminar_historial(hid: int, db: Session = Depends(get_db), _a: Usuario = De
         raise HTTPException(status_code=404, detail="Registro no encontrado")
     db.delete(db_obj)
     db.commit()
+
+
+@router.post("/historial/{hid}/facturar", response_model=HistorialResponse)
+def vincular_factura(hid: int, data: dict, db: Session = Depends(get_db), _u: Usuario = Depends(get_current_active_user)):
+    h = db.query(HistorialClinico).filter(HistorialClinico.id == hid).first()
+    if not h:
+        raise HTTPException(status_code=404, detail="Registro no encontrado")
+    comprobante_id = data.get("comprobante_id")
+    if not comprobante_id:
+        raise HTTPException(status_code=400, detail="comprobante_id requerido")
+    comp = db.query(ComprobantePago).filter(ComprobantePago.id == comprobante_id).first()
+    if not comp:
+        raise HTTPException(status_code=404, detail="Comprobante no encontrado")
+    h.comprobante_id = comprobante_id
+    db.commit()
+    db.refresh(h)
+    return h

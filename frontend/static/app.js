@@ -1,8 +1,8 @@
-const API="";let token=localStorage.getItem("vet_token")||null;let currentUser=null;let chartIngresos=null,chartEspecies=null,chartServicios=null;
+const API="";let token=localStorage.getItem("vet_token")||null;let currentUser=null;let chartIngresos=null,chartEspecies=null,chartServicios=null;let propietariosCache=[];let _cobrarHistorialId=null;
 async function api(path,opts={}){const h={"Content-Type":"application/json",...opts.headers};if(token)h["Authorization"]="Bearer "+token;const r=await fetch(API+path,{...opts,headers:h});if(r.status===401){logout();throw new Error("Sesion expirada")}if(r.status===204)return null;const d=await r.json();if(!r.ok){let m="Error";if(d.detail){m=typeof d.detail==="string"?d.detail:Array.isArray(d.detail)?d.detail.map(x=>x.msg||x).join("; "):JSON.stringify(d.detail)}throw new Error(m)}return d}
 function showToast(m,ok=true){const t=document.getElementById("toast");t.textContent=m;t.className=`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl shadow-lg text-sm font-medium text-white fade-in ${ok?"bg-brand-600":"bg-red-500"}`;setTimeout(()=>t.classList.add("hidden"),3000)}
-function openModal(t){document.getElementById("modal-"+t).classList.remove("hidden");if(t==="paciente")fillPropietarioSelect("p-propietario");if(t==="cita")fillPacienteSelect("c-paciente");if(t==="historial")fillPacienteSelect("h-paciente");if(t==="comprobante"){fillPropietarioSelect("cb-propietario");loadServiciosSelect();initDetalles()}}
-function closeModal(t){document.getElementById("modal-"+t).classList.add("hidden");const frm=document.getElementById("form-"+t);if(frm)frm.reset();if(t==="comprobante"){document.getElementById("detalles-container").innerHTML="";updateTotals()}}
+function openModal(t){document.getElementById("modal-"+t).classList.remove("hidden");if(t==="paciente")fillPropietarioSelect("p-propietario");if(t==="cita")fillPacienteSelect("c-paciente");if(t==="historial")fillPacienteSelect("h-paciente");if(t==="comprobante"){fillPropietarioSelect("cb-propietario");loadServiciosSelect();initDetalles();setTimeout(()=>{const sel=document.getElementById("cb-propietario");sel.addEventListener("change",function(){const pid=parseInt(this.value);if(pid){const p=propietariosCache.find(x=>x.id===pid);if(p){document.getElementById("cb-cliente").value=p.nombre||"";document.getElementById("cb-ruc").value=p.ruc_dni||"";document.getElementById("cb-cliente").readOnly=true;document.getElementById("cb-ruc").readOnly=true}}else{document.getElementById("cb-cliente").value="";document.getElementById("cb-ruc").value="";document.getElementById("cb-cliente").readOnly=false;document.getElementById("cb-ruc").readOnly=false}})},200)}}
+function closeModal(t){document.getElementById("modal-"+t).classList.add("hidden");const frm=document.getElementById("form-"+t);if(frm)frm.reset();if(t==="comprobante"){document.getElementById("detalles-container").innerHTML="";updateTotals();_cobrarHistorialId=null;var ce=document.getElementById("cb-cliente");var cr=document.getElementById("cb-ruc");if(ce)ce.readOnly=false;if(cr)cr.readOnly=false}}
 function toggleMobile(){document.getElementById("mobile-nav").classList.toggle("hidden")}
 async function handleLogin(e){e.preventDefault();document.getElementById("login-error").classList.add("hidden");const b=new URLSearchParams();b.append("username",document.getElementById("l-user").value);b.append("password",document.getElementById("l-pass").value);try{const r=await fetch(API+"/auth/login",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:b});const d=await r.json();if(!r.ok){if(r.status===423){showAuthError(d.detail);document.getElementById("l-pass").value="";return}throw new Error(d.detail||"Error")}loginSuccess(d)}catch(err){showAuthError(err.message)}}
 function showAuthError(m){const e=document.getElementById("login-error");e.textContent=m;e.classList.remove("hidden")}
@@ -14,7 +14,7 @@ function applyRBAC(){const rol=currentUser?.rol||"";const ad=rol==="admin";const
 async function tryAutoLogin(){if(!token)return;try{const r=await fetch(API+"/auth/me",{headers:{"Authorization":"Bearer "+token}});if(!r.ok)throw new Error();currentUser=await r.json();enterApp()}catch{logout()}}
 const allSections=["dashboard","usuarios","propietarios","mascotas","citas","historial","inventario","facturacion"];
 function showSection(n){allSections.forEach(s=>document.getElementById("sec-"+s).classList.toggle("hidden",s!==n));applyRBAC();if(n==="dashboard")loadDashboard();else if(n==="usuarios")loadUsuarios();else if(n==="propietarios")loadPropietarios();else if(n==="mascotas")loadMascotas();else if(n==="citas")loadCitas();else if(n==="historial")loadHistorial();else if(n==="inventario")loadInventario();else if(n==="facturacion")loadComprobantes()}
-async function fillPropietarioSelect(sid){const s=document.getElementById(sid);if(!s)return;try{const d=await api("/propietarios");s.innerHTML='<option value="">Seleccionar...</option>'+d.map(p=>`<option value="${p.id}">#${p.id} - ${p.nombre}</option>`).join("")}catch{s.innerHTML='<option value="">Error</option>'}}
+async function fillPropietarioSelect(sid){const s=document.getElementById(sid);if(!s)return;try{const d=await api("/propietarios");propietariosCache=d;s.innerHTML='<option value="">Seleccionar...</option>'+d.map(p=>`<option value="${p.id}">#${p.id} - ${p.nombre}</option>`).join("")}catch{s.innerHTML='<option value="">Error</option>'}}
 async function fillPacienteSelect(sid){const s=document.getElementById(sid);if(!s)return;try{const[m,p]=await Promise.all([api("/pacientes"),api("/propietarios")]);const pm={};p.forEach(x=>pm[x.id]=x.nombre);s.innerHTML='<option value="">Seleccionar paciente...</option>'+m.map(x=>`<option value="${x.id}">${x.nombre} (${pm[x.propietario_id]||"?"})</option>`).join("")}catch{s.innerHTML='<option value="">Error</option>'}}
 async function loadDashboard(){
 try{
@@ -96,10 +96,43 @@ async function submitCita(e){e.preventDefault();try{await api("/citas",{method:"
 async function aprobarCita(id){try{await api("/citas/"+id+"/aprobar",{method:"POST"});showToast("Cita confirmada");loadCitas()}catch(e){showToast(e.message,false)}}
 async function deleteCita(id){if(!confirm("Eliminar esta cita?"))return;try{await api("/citas/"+id,{method:"DELETE"});showToast("Cita eliminada");loadCitas()}catch(e){showToast(e.message,false)}}
 async function loadHistorial(){try{const[m,p]=await Promise.all([api("/historial"),api("/pacientes")]);const pn={};p.forEach(x=>pn[x.id]=x.nombre);const fs=document.getElementById("h-filtro-paciente");if(fs.options.length<=1){p.forEach(x=>{const o=document.createElement("option");o.value=x.id;o.textContent=x.nombre;fs.appendChild(o)})}const fv=fs.value;const filtered=fv?m.filter(h=>h.paciente_id==fv):m;document.getElementById("tabla-historial").innerHTML=filtered.map(h=>
-`<tr class="hover:bg-gray-50"><td class="px-4 py-3 text-sm">${new Date(h.fecha).toLocaleDateString("es-PE")}</td><td class="px-4 py-3 text-sm font-medium">${pn[h.paciente_id]||"?"}</td><td class="px-4 py-3 text-sm">${h.motivo_consulta}</td><td class="px-4 py-3 text-sm">${h.diagnostico||"-"}</td><td class="px-4 py-3 text-sm">${h.tratamiento||"-"}</td><td class="px-4 py-3 text-center space-x-2"><button onclick="printHistorial(${h.id})" class="text-blue-500 hover:text-blue-700 text-sm" title="Imprimir"><i class="fa-solid fa-print"></i></button>${currentUser?.rol==="admin"?`<button onclick="deleteHistorial(${h.id})" class="text-red-500 hover:text-red-700 text-sm"><i class="fa-solid fa-trash"></i></button>`:""}</td></tr>
+`<tr class="hover:bg-gray-50"><td class="px-4 py-3 text-sm">${new Date(h.fecha).toLocaleDateString("es-PE")}</td><td class="px-4 py-3 text-sm font-medium">${pn[h.paciente_id]||"?"}</td><td class="px-4 py-3 text-sm">${h.motivo_consulta}</td><td class="px-4 py-3 text-sm">${h.diagnostico||"-"}</td><td class="px-4 py-3 text-sm">${h.tratamiento||"-"}</td><td class="px-4 py-3 text-center space-x-2">${h.comprobante_id?`<span class="text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-100 text-emerald-700"><i class="fa-solid fa-check mr-0.5"></i>Facturado</span>`:`<button onclick="cobrarHistorial(${h.id})" class="text-emerald-600 hover:text-emerald-800 text-sm font-semibold" title="Cobrar / Facturar"><i class="fa-solid fa-file-invoice-dollar mr-0.5"></i>Cobrar</button>`}<button onclick="printHistorial(${h.id})" class="text-blue-500 hover:text-blue-700 text-sm" title="Imprimir"><i class="fa-solid fa-print"></i></button>${currentUser?.rol==="admin"?`<button onclick="deleteHistorial(${h.id})" class="text-red-500 hover:text-red-700 text-sm"><i class="fa-solid fa-trash"></i></button>`:""}</td></tr>
 `).join("")}catch(e){showToast(e.message,false)}}
 async function submitHistorial(e){e.preventDefault();const pid=parseInt(document.getElementById("h-paciente").value);try{await api("/pacientes/"+pid+"/historial",{method:"POST",body:JSON.stringify({motivo_consulta:document.getElementById("h-motivo").value,diagnostico:document.getElementById("h-diagnostico").value,tratamiento:document.getElementById("h-tratamiento").value||null,temperatura:document.getElementById("h-temp").value||null,frecuencia_cardiaca:document.getElementById("h-fc").value||null,peso_kg:parseFloat(document.getElementById("h-peso").value)||null,observaciones:document.getElementById("h-obs").value||null,proxima_cita:document.getElementById("h-proxima").value?new Date(document.getElementById("h-proxima").value).toISOString():null})});showToast("Consulta registrada");closeModal("historial");loadHistorial()}catch(e){showToast(e.message,false)}}
 async function deleteHistorial(id){if(!confirm("Eliminar este registro?"))return;try{await api("/historial/"+id,{method:"DELETE"});showToast("Registro eliminado");loadHistorial()}catch(e){showToast(e.message,false)}}
+async function cobrarHistorial(hid){
+try{
+const h=await api("/historial/"+hid);
+const pac=await api("/pacientes/"+h.paciente_id);
+const prop=await api("/propietarios/"+pac.propietario_id);
+_cobrarHistorialId=hid;
+await fillPropietarioSelect("cb-propietario");
+const sel=document.getElementById("cb-propietario");
+sel.value=prop.id;
+sel.dispatchEvent(new Event("change"));
+document.getElementById("cb-cliente").value=prop.nombre;
+document.getElementById("cb-ruc").value=prop.ruc_dni||"";
+document.getElementById("cb-tipo").value="boleta";
+initDetalles();
+await loadServiciosSelect();
+const container=document.getElementById("detalles-container");
+container.innerHTML="";
+const consultas=serviciosCache.filter(s=>s.nombre.toLowerCase().includes("consulta"));
+if(consultas.length){addDetalleRowWithService(consultas[0].id,consultas[0].precio,1)}
+if(h.tratamiento&&h.tratamiento.toLowerCase().includes("vacuna")){const sv=serviciosCache.filter(s=>s.nombre.toLowerCase().includes("vacuna"));if(sv.length)addDetalleRowWithService(sv[0].id,sv[0].precio,1)}
+if(h.tratamiento&&h.tratamiento.toLowerCase().includes("desparasit")){const sv=serviciosCache.filter(s=>s.nombre.toLowerCase().includes("desparasit"));if(sv.length)addDetalleRowWithService(sv[0].id,sv[0].precio,1)}
+if(h.tratamiento&&h.tratamiento.toLowerCase().includes("profilaxis")){const sv=serviciosCache.filter(s=>s.nombre.toLowerCase().includes("profilaxis"));if(sv.length)addDetalleRowWithService(sv[0].id,sv[0].precio,1)}
+if(h.tratamiento&&h.tratamiento.toLowerCase().includes("antibiot")){const sv=serviciosCache.filter(s=>s.nombre.toLowerCase().includes("amoxicilina"));if(sv.length)addDetalleRowWithService(sv[0].id,sv[0].precio,1)}
+updateTotals();
+openModal("comprobante");
+}catch(e){showToast(e.message,false)}}
+function addDetalleRowWithService(serviceId,price,qty){
+const c=document.getElementById("detalles-container");
+const r=document.createElement("div");
+r.className="flex gap-2 items-end fade-in";
+var opts=serviciosCache.map(function(s){return '<option value="'+s.id+'" data-precio="'+s.precio+'"'+(s.id===serviceId?" selected":"")+'">'+s.nombre+' - S/ '+s.precio.toFixed(2)+'</option>'}).join("");
+r.innerHTML='<select class="det-sel border rounded-lg px-2 py-1.5 text-sm outline-none flex-1" onchange="onDetSelChange(this)"><option value="">Seleccionar...</option>'+opts+'</select><input type="number" class="det-cant border rounded-lg px-2 py-1.5 text-sm outline-none w-16" value="'+qty+'" min="1" onchange="updateTotals()"/><input type="number" class="det-prec border rounded-lg px-2 py-1.5 text-sm outline-none w-24" step="0.01" value="'+price.toFixed(2)+'" placeholder="S/" onchange="updateTotals()"/><button type="button" onclick="removeDetRow(this)" class="text-red-500 hover:text-red-700 px-1"><i class="fa-solid fa-xmark"></i></button>';
+c.appendChild(r);updateTotals()}
 async function printHistorial(id){try{const h=await api("/historial/"+id);const p=await api("/pacientes/"+h.paciente_id);const po=await api("/propietarios/"+p.propietario_id);const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Historial - ${p.nombre}</title><style>body{font-family:Arial,sans-serif;padding:30px;font-size:13px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ddd;padding:6px 8px;text-align:left}.hdr{font-size:18px;font-weight:bold;border:none;padding:0 0 8px}.sub{color:#666;border:none;padding:0}.em{border:none;padding:0;padding-top:12px;font-weight:bold}</style></head><body><table><tr><td class="hdr" colspan="4">VetCare - Historial Clinico</td></tr><tr><td class="sub" colspan="4">${new Date(h.fecha).toLocaleString("es-PE")}</td></tr><tr><td colspan="4"></td></tr><tr><td class="em">Mascota:</td><td>${p.nombre} (${p.especie} - ${p.raza||"N/A"})</td><td class="em">Propietario:</td><td>${po.nombre} - ${po.telefono}</td></tr><tr><td class="em">Sexo:</td><td>${p.sexo||"N/A"}</td><td class="em">Peso:</td><td>${p.peso?p.peso+" kg":"N/A"}</td></tr><tr><td colspan="4"></td></tr><tr><td class="em">Motivo:</td><td colspan="3">${h.motivo_consulta}</td></tr><tr><td class="em">Diagnostico:</td><td colspan="3">${h.diagnostico||"-"}</td></tr><tr><td class="em">Tratamiento:</td><td colspan="3">${h.tratamiento||"-"}</td></tr><tr><td class="em">Temperatura:</td><td>${h.temperatura||"N/A"}</td><td class="em">Freq. Cardiaca:</td><td>${h.frecuencia_cardiaca||"N/A"}</td></tr><tr><td class="em">Peso(kg):</td><td>${h.peso_kg||"N/A"}</td><td></td><td></td></tr><tr><td class="em">Observaciones:</td><td colspan="3">${h.observaciones||"-"}</td></tr><tr><td class="em">Proxima Cita:</td><td colspan="3">${h.proxima_cita?new Date(h.proxima_cita).toLocaleString("es-PE"):"Sin programar"}</td></tr></table></body></html>`;const w=window.open("","","width=750,height=600");w.document.write(html);w.document.close();w.print()}catch(e){showToast(e.message,false)}}
 async function loadInventario(){try{const d=await api("/inventario");const la=document.getElementById("stock-alerta");const bajos=d.filter(x=>x.stock<=x.stock_minimo);if(bajos.length){la.classList.remove("hidden");la.innerHTML=`<i class="fa-solid fa-triangle-exclamation mr-1"></i><strong>${bajos.length} articulos con stock bajo:</strong> ${bajos.map(x=>x.nombre+" ("+x.stock+")").join(", ")}`}else{la.classList.add("hidden")}document.getElementById("tabla-inventario").innerHTML=d.map(x=>
 `<tr class="hover:bg-gray-50"><td class="px-4 py-3 text-sm font-medium">${x.nombre}</td><td class="px-4 py-3 text-sm">${x.categoria}</td><td class="px-4 py-3 text-sm ${x.stock<=x.stock_minimo?"text-red-600 font-bold":""}">${x.stock}</td><td class="px-4 py-3 text-sm">S/ ${x.precio_venta.toFixed(2)}</td><td class="px-4 py-3 text-sm">${x.proveedor||"-"}</td><td class="px-4 py-3 text-center space-x-2"><button onclick="openStockModal(${x.id},'${x.nombre.replace(/'/g,"\\'")}',${x.stock})" class="text-amber-500 hover:text-amber-700 text-sm" title="Ajustar stock"><i class="fa-solid fa-box-open"></i></button><button onclick="deleteInventario(${x.id})" class="text-red-500 hover:text-red-700 text-sm"><i class="fa-solid fa-trash"></i></button></td></tr>
@@ -161,13 +194,23 @@ async function submitComprobante(e){
   if(!detalles.length){showToast('Agrega al menos un item',false);return}
   var propVal=document.getElementById('cb-propietario').value;
   try{
-    await api('/facturacion/comprobantes',{method:'POST',body:JSON.stringify({
+    var comp=await api('/facturacion/comprobantes',{method:'POST',body:JSON.stringify({
       tipo_documento:document.getElementById('cb-tipo').value,
       cliente_nombre:document.getElementById('cb-cliente').value,
       cliente_ruc_dni:document.getElementById('cb-ruc').value||null,
       propietario_id:propVal?parseInt(propVal):null,
       detalles:detalles
     })});
+    if(_cobrarHistorialId){
+      var _hid=_cobrarHistorialId;
+      try{await api('/historial/'+_hid+'/facturar',{method:'POST',body:JSON.stringify({comprobante_id:comp.id})})}catch{}
+      _cobrarHistorialId=null;
+      document.getElementById('cb-cliente').readOnly=false;
+      document.getElementById('cb-ruc').readOnly=false;
+      showToast('Comprobante generado');closeModal('comprobante');loadComprobantes();loadHistorial();return
+    }
+    document.getElementById('cb-cliente').readOnly=false;
+    document.getElementById('cb-ruc').readOnly=false;
     showToast('Comprobante generado');closeModal('comprobante');loadComprobantes()
   }catch(e){showToast(e.message,false)}
 }
