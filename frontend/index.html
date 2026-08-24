@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>VetCare - Panel</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
 <link rel="stylesheet" href="/static/app.css"/>
 <script>tailwind.config={theme:{extend:{colors:{brand:{50:"#f0fdf4",100:"#dcfce7",500:"#22c55e",600:"#16a34a",700:"#15803d",800:"#166534"}}}}}</script>
@@ -45,12 +46,42 @@
 <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
 
 <section id="sec-dashboard" class="fade-in">
-<h1 class="text-2xl font-bold text-gray-800 mb-6">Panel Principal</h1>
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8" id="dash-stats"></div>
-<h2 class="text-lg font-semibold text-gray-700 mb-3">Mascotas Recientes</h2>
-<div id="dash-mascotas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8"></div>
-<h2 class="text-lg font-semibold text-gray-700 mb-3">Proximas Citas</h2>
-<div id="dash-citas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+<h1 class="text-2xl font-bold text-gray-800 mb-2">Panel Principal</h1>
+<p class="text-sm text-gray-500 mb-6">Resumen general de la clinica veterinaria</p>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" id="dash-kpi"></div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+<div class="bg-white rounded-xl shadow p-5 lg:col-span-2">
+<h3 class="text-sm font-semibold text-gray-700 mb-3"><i class="fa-solid fa-chart-line mr-1 text-brand-600"></i> Ingresos Mensuales</h3>
+<div style="height:220px"><canvas id="chart-ingresos"></canvas></div>
+</div>
+<div class="bg-white rounded-xl shadow p-5">
+<h3 class="text-sm font-semibold text-gray-700 mb-3"><i class="fa-solid fa-chart-pie mr-1 text-purple-600"></i> Especies</h3>
+<div style="height:220px"><canvas id="chart-especies"></canvas></div>
+</div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+<div class="bg-white rounded-xl shadow p-5">
+<h3 class="text-sm font-semibold text-gray-700 mb-3"><i class="fa-solid fa-chart-bar mr-1 text-blue-600"></i> Top Servicios</h3>
+<div style="height:220px"><canvas id="chart-servicios"></canvas></div>
+</div>
+<div class="bg-white rounded-xl shadow p-5">
+<div class="flex items-center justify-between mb-3">
+<h3 class="text-sm font-semibold text-gray-700"><i class="fa-solid fa-calendar-day mr-1 text-amber-600"></i> Proximas Citas</h3>
+<span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium" id="citas-hoy-badge"></span>
+</div>
+<div id="dash-citas-hoy" class="space-y-2 max-h-[240px] overflow-y-auto"></div>
+</div>
+<div class="bg-white rounded-xl shadow p-5">
+<div class="flex items-center justify-between mb-3">
+<h3 class="text-sm font-semibold text-gray-700"><i class="fa-solid fa-triangle-exclamation mr-1 text-red-600"></i> Alertas Inventario</h3>
+<span class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium" id="alertas-badge"></span>
+</div>
+<div id="dash-alertas" class="space-y-2 max-h-[240px] overflow-y-auto"></div>
+</div>
+</div>
 </section>
 
 <section id="sec-usuarios" class="hidden fade-in admin-section">

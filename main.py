@@ -327,6 +327,135 @@ app.include_router(inventory_router)
 app.include_router(billing_router)
 
 
+# -- Dashboard API --
+@app.get("/api/dashboard")
+def dashboard_data():
+    from models import Propietario, Paciente, Cita, HistorialClinico, Inventario, ComprobantePago, DetalleComprobante, ServicioProducto
+    from database import SessionLocal
+    from sqlalchemy import func, extract
+    from datetime import datetime, timedelta, timezone
+
+    db = SessionLocal()
+    try:
+        now = datetime.now(timezone.utc)
+        month_names = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+
+        # KPIs
+        total_propietarios = db.query(func.count(Propietario.id)).scalar() or 0
+        total_pacientes = db.query(func.count(Paciente.id)).scalar() or 0
+        total_citas = db.query(func.count(Cita.id)).scalar() or 0
+        citas_pendientes = db.query(func.count(Cita.id)).filter(Cita.estado == "Pendiente").scalar() or 0
+        citas_atendidas = db.query(func.count(Cita.id)).filter(Cita.estado == "Atendido").scalar() or 0
+        total_historial = db.query(func.count(HistorialClinico.id)).scalar() or 0
+        total_inventario = db.query(func.count(Inventario.id)).scalar() or 0
+        bajo_stock = db.query(func.count(Inventario.id)).filter(Inventario.stock <= Inventario.stock_minimo).scalar() or 0
+
+        # Ingresos del mes actual
+        current_month_total = db.query(func.coalesce(func.sum(ComprobantePago.total), 0.0)).filter(
+            extract("year", ComprobantePago.fecha_emision) == now.year,
+            extract("month", ComprobantePago.fecha_emision) == now.month,
+            ComprobantePago.estado == "Pagado"
+        ).scalar() or 0.0
+
+        # Ingresos mes anterior (para tendencia)
+        prev_month = now.month - 1 if now.month > 1 else 12
+        prev_year = now.year if now.month > 1 else now.year - 1
+        prev_month_total = db.query(func.coalesce(func.sum(ComprobantePago.total), 0.0)).filter(
+            extract("year", ComprobantePago.fecha_emision) == prev_year,
+            extract("month", ComprobantePago.fecha_emision) == prev_month,
+            ComprobantePago.estado == "Pagado"
+        ).scalar() or 0.0
+
+        ingreso_tendencia = round(((current_month_total - prev_month_total) / prev_month_total * 100), 1) if prev_month_total > 0 else 0
+
+        # Ingresos ultimos 6 meses
+        ingresos_mensuales = []
+        for i in range(5, -1, -1):
+            m = now.month - i
+            y = now.year
+            while m <= 0:
+                m += 12
+                y -= 1
+            total = db.query(func.coalesce(func.sum(ComprobantePago.total), 0.0)).filter(
+                extract("year", ComprobantePago.fecha_emision) == y,
+                extract("month", ComprobantePago.fecha_emision) == m,
+                ComprobantePago.estado == "Pagado"
+            ).scalar() or 0.0
+            ingresos_mensuales.append({"mes": month_names[m - 1], "total": round(float(total), 2)})
+
+        # Distribucion de especies
+        especies_raw = db.query(Paciente.especie, func.count(Paciente.id)).group_by(Paciente.especie).all()
+        especies = [{"especie": e[0] or "Otro", "cantidad": e[1]} for e in especies_raw]
+
+        # Top servicios (por cantidad de detalles en comprobantes pagados)
+        top_servicios_raw = (
+            db.query(ServicioProducto.nombre, func.sum(DetalleComprobante.cantidad).label("total_vendido"))
+            .join(DetalleComprobante, DetalleComprobante.servicio_producto_id == ServicioProducto.id)
+            .join(ComprobantePago, ComprobantePago.id == DetalleComprobante.comprobante_id)
+            .filter(ComprobantePago.estado == "Pagado")
+            .group_by(ServicioProducto.nombre)
+            .order_by(func.sum(DetalleComprobante.cantidad).desc())
+            .limit(6)
+            .all()
+        )
+        top_servicios = [{"nombre": s[0], "cantidad": int(s[1])} for s in top_servicios_raw]
+
+        # Proximas citas (hoy y futuras)
+        hoy = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        proximas_citas_raw = (
+            db.query(Cita)
+            .filter(Cita.fecha >= hoy, Cita.estado == "Pendiente")
+            .order_by(Cita.fecha.asc())
+            .limit(6)
+            .all()
+        )
+        paciente_ids = [c.paciente_id for c in proximas_citas_raw]
+        pacientes_map = {p.id: p.nombre for p in db.query(Paciente).filter(Paciente.id.in_(paciente_ids)).all()} if paciente_ids else {}
+        proximas_citas = []
+        for c in proximas_citas_raw:
+            proximas_citas.append({
+                "id": c.id,
+                "fecha": c.fecha.isoformat(),
+                "motivo": c.motivo,
+                "estado": c.estado,
+                "paciente_nombre": pacientes_map.get(c.paciente_id, f"Mascota #{c.paciente_id}")
+            })
+
+        # Alertas inventario (bajo stock + proximos a caducar)
+        alertas_stock = []
+        for inv in db.query(Inventario).filter(Inventario.stock <= Inventario.stock_minimo).all():
+            alertas_stock.append({"id": inv.id, "nombre": inv.nombre, "stock": inv.stock, "stock_minimo": inv.stock_minimo, "tipo": "bajo_stock"})
+        for inv in db.query(Inventario).filter(Inventario.fecha_caducidad != None).all():
+            try:
+                cad = datetime.strptime(inv.fecha_caducidad, "%Y-%m-%d")
+                if (cad - now.replace(tzinfo=None)).days <= 90:
+                    alertas_stock.append({"id": inv.id, "nombre": inv.nombre, "fecha_caducidad": inv.fecha_caducidad, "tipo": "caducidad"})
+            except Exception:
+                pass
+
+        return {
+            "kpi": {
+                "propietarios": total_propietarios,
+                "pacientes": total_pacientes,
+                "citas_total": total_citas,
+                "citas_pendientes": citas_pendientes,
+                "citas_atendidas": citas_atendidas,
+                "historial": total_historial,
+                "inventario_total": total_inventario,
+                "inventario_bajo_stock": bajo_stock,
+                "ingresos_mes": round(float(current_month_total), 2),
+                "ingresos_tendencia": ingreso_tendencia,
+            },
+            "ingresos_mensuales": ingresos_mensuales,
+            "especies": especies,
+            "top_servicios": top_servicios,
+            "proximas_citas": proximas_citas,
+            "alertas_inventario": alertas_stock,
+        }
+    finally:
+        db.close()
+
+
 # -- Static files --
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "frontend" / "static"), name="static")
 

@@ -1,4 +1,4 @@
-const API="";let token=localStorage.getItem("vet_token")||null;let currentUser=null;
+const API="";let token=localStorage.getItem("vet_token")||null;let currentUser=null;let chartIngresos=null,chartEspecies=null,chartServicios=null;
 async function api(path,opts={}){const h={"Content-Type":"application/json",...opts.headers};if(token)h["Authorization"]="Bearer "+token;const r=await fetch(API+path,{...opts,headers:h});if(r.status===401){logout();throw new Error("Sesion expirada")}if(r.status===204)return null;const d=await r.json();if(!r.ok){let m="Error";if(d.detail){m=typeof d.detail==="string"?d.detail:Array.isArray(d.detail)?d.detail.map(x=>x.msg||x).join("; "):JSON.stringify(d.detail)}throw new Error(m)}return d}
 function showToast(m,ok=true){const t=document.getElementById("toast");t.textContent=m;t.className=`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl shadow-lg text-sm font-medium text-white fade-in ${ok?"bg-brand-600":"bg-red-500"}`;setTimeout(()=>t.classList.add("hidden"),3000)}
 function openModal(t){document.getElementById("modal-"+t).classList.remove("hidden");if(t==="paciente")fillPropietarioSelect("p-propietario");if(t==="cita")fillPacienteSelect("c-paciente");if(t==="historial")fillPacienteSelect("h-paciente");if(t==="comprobante"){fillPropietarioSelect("cb-propietario");loadServiciosSelect();initDetalles()}}
@@ -16,17 +16,61 @@ const allSections=["dashboard","usuarios","propietarios","mascotas","citas","his
 function showSection(n){allSections.forEach(s=>document.getElementById("sec-"+s).classList.toggle("hidden",s!==n));applyRBAC();if(n==="dashboard")loadDashboard();else if(n==="usuarios")loadUsuarios();else if(n==="propietarios")loadPropietarios();else if(n==="mascotas")loadMascotas();else if(n==="citas")loadCitas();else if(n==="historial")loadHistorial();else if(n==="inventario")loadInventario();else if(n==="facturacion")loadComprobantes()}
 async function fillPropietarioSelect(sid){const s=document.getElementById(sid);if(!s)return;try{const d=await api("/propietarios");s.innerHTML='<option value="">Seleccionar...</option>'+d.map(p=>`<option value="${p.id}">#${p.id} - ${p.nombre}</option>`).join("")}catch{s.innerHTML='<option value="">Error</option>'}}
 async function fillPacienteSelect(sid){const s=document.getElementById(sid);if(!s)return;try{const[m,p]=await Promise.all([api("/pacientes"),api("/propietarios")]);const pm={};p.forEach(x=>pm[x.id]=x.nombre);s.innerHTML='<option value="">Seleccionar paciente...</option>'+m.map(x=>`<option value="${x.id}">${x.nombre} (${pm[x.propietario_id]||"?"})</option>`).join("")}catch{s.innerHTML='<option value="">Error</option>'}}
-async function loadDashboard(){try{const[pr,pa,ci,hi,iv]=await Promise.all([api("/propietarios/count"),api("/pacientes/count"),api("/citas/count"),api("/historial/count"),api("/inventario/count")]);document.getElementById("dash-stats").innerHTML=
-`<div class="bg-white rounded-xl shadow p-5 flex items-center gap-4 fade-in"><div class="bg-purple-100 text-purple-600 w-12 h-12 rounded-xl flex items-center justify-center"><i class="fa-solid fa-user-group text-lg"></i></div><div><p class="text-xs text-gray-500">Propietarios</p><p class="text-xl font-bold text-gray-800">${pr.total}</p></div></div>
-<div class="bg-white rounded-xl shadow p-5 flex items-center gap-4 fade-in"><div class="bg-brand-100 text-brand-600 w-12 h-12 rounded-xl flex items-center justify-center"><i class="fa-solid fa-paw text-lg"></i></div><div><p class="text-xs text-gray-500">Mascotas</p><p class="text-xl font-bold text-gray-800">${pa.total}</p></div></div>
-<div class="bg-white rounded-xl shadow p-5 flex items-center gap-4 fade-in"><div class="bg-blue-100 text-blue-600 w-12 h-12 rounded-xl flex items-center justify-center"><i class="fa-solid fa-calendar-check text-lg"></i></div><div><p class="text-xs text-gray-500">Citas</p><p class="text-xl font-bold text-gray-800">${ci.total}</p></div></div>
-<div class="bg-white rounded-xl shadow p-5 flex items-center gap-4 fade-in"><div class="bg-rose-100 text-rose-600 w-12 h-12 rounded-xl flex items-center justify-center"><i class="fa-solid fa-boxes-stacked text-lg"></i></div><div><p class="text-xs text-gray-500">Inventario</p><p class="text-xl font-bold text-gray-800">${iv.total} <span class="text-xs font-normal text-red-500">(${iv.bajo_stock} bajo)</span></p></div></div>`
-const[mp,ct]=await Promise.all([api("/pacientes"),api("/citas")]);const pm={};(await api("/propietarios")).forEach(p=>pm[p.id]=p.nombre);const recent=mp.slice(-6).reverse();const petColors=["bg-brand-50 border-brand-200","bg-blue-50 border-blue-200","bg-purple-50 border-purple-200","bg-rose-50 border-rose-200","bg-amber-50 border-amber-200","bg-teal-50 border-teal-200"];document.getElementById("dash-mascotas").innerHTML=recent.length?recent.map((p,i)=>
-`<div class="bg-white rounded-xl shadow border-l-4 ${petColors[i%6]} p-4 fade-in"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-bold text-sm">${p.nombre.charAt(0).toUpperCase()}</div><div><p class="font-semibold text-gray-800">${p.nombre}</p><p class="text-xs text-gray-500">${p.especie} - ${p.raza||"Sin raza"}</p><p class="text-xs text-gray-400">Dueño: ${pm[p.propietario_id]||"?"}</p></div></div></div>
-`).join(""):`<p class="text-gray-400 text-sm col-span-full">No hay mascotas registradas.</p>`
-const upcoming=ct.filter(c=>c.estado!=="Cancelada").slice(-6).reverse();const stm={Pendiente:"bg-yellow-100 text-yellow-700",Confirmada:"bg-brand-100 text-brand-700",Completada:"bg-blue-100 text-blue-700",Cancelada:"bg-red-100 text-red-700"};const pn={};mp.forEach(p=>pn[p.id]=p.nombre);document.getElementById("dash-citas").innerHTML=upcoming.length?upcoming.map(c=>
-`<div class="bg-white rounded-xl shadow p-4 fade-in"><div class="flex items-center gap-2 mb-2"><span class="text-xs px-2 py-0.5 rounded-full font-medium ${stm[c.estado]||"bg-gray-100"}">${c.estado}</span><span class="text-xs text-gray-400">${new Date(c.fecha).toLocaleDateString("es-PE",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})}</span></div><p class="font-semibold text-gray-800">${pn[c.paciente_id]||"Mascota #"+c.paciente_id}</p><p class="text-sm text-gray-600">${c.motivo}</p></div>
-`).join(""):`<p class="text-gray-400 text-sm col-span-full">No hay proximas citas.</p>`
+async function loadDashboard(){
+try{
+const d=await api("/api/dashboard");
+const k=d.kpi;
+const tendencia=k.ingresos_tendencia;
+const tColor=tendencia>=0?"text-brand-600":"text-red-500";
+const tIcon=tendencia>=0?"fa-arrow-up":"fa-arrow-down";
+document.getElementById("dash-kpi").innerHTML=`
+<div class="bg-white rounded-xl shadow p-4 fade-in"><div class="flex items-center gap-3"><div class="w-11 h-11 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center"><i class="fa-solid fa-sol"></i></div><div class="flex-1"><p class="text-xs text-gray-500">Ingresos del Mes</p><p class="text-xl font-bold text-gray-800">S/ ${k.ingresos_mes.toFixed(2)}</p></div><span class="text-xs font-semibold ${tColor}"><i class="fa-solid ${tIcon} mr-0.5"></i>${Math.abs(tendencia)}%</span></div></div>
+<div class="bg-white rounded-xl shadow p-4 fade-in"><div class="flex items-center gap-3"><div class="w-11 h-11 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-calendar-check"></i></div><div class="flex-1"><p class="text-xs text-gray-500">Total Citas</p><p class="text-xl font-bold text-gray-800">${k.citas_total}</p></div><div class="flex gap-1"><span class="text-xs bg-amber-100 text-amber-700 px-1.5 rounded">${k.citas_pendientes} pend.</span><span class="text-xs bg-brand-100 text-brand-700 px-1.5 rounded">${k.citas_atendidas} atend.</span></div></div></div>
+<div class="bg-white rounded-xl shadow p-4 fade-in"><div class="flex items-center gap-3"><div class="w-11 h-11 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center"><i class="fa-solid fa-paw"></i></div><div class="flex-1"><p class="text-xs text-gray-500">Pacientes Activos</p><p class="text-xl font-bold text-gray-800">${k.pacientes}</p></div><span class="text-xs text-gray-400">${k.propietarios} propietarios</span></div></div>
+<div class="bg-white rounded-xl shadow p-4 fade-in"><div class="flex items-center gap-3"><div class="w-11 h-11 rounded-xl ${k.inventario_bajo_stock>0?"bg-red-100 text-red-600":"bg-amber-100 text-amber-600"} flex items-center justify-center"><i class="fa-solid fa-boxes-stacked"></i></div><div class="flex-1"><p class="text-xs text-gray-500">Inventario</p><p class="text-xl font-bold text-gray-800">${k.inventario_total}</p></div>${k.inventario_bajo_stock>0?`<span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-medium"><i class="fa-solid fa-triangle-exclamation mr-0.5"></i>${k.inventario_bajo_stock}</span>`:""}</div></div>`;
+
+const labels=d.ingresos_mensuales.map(x=>x.mes);
+const data=d.ingresos_mensuales.map(x=>x.total);
+if(chartIngresos)chartIngresos.destroy();
+chartIngresos=new Chart(document.getElementById("chart-ingresos"),{type:"bar",data:{labels,datasets:[{label:"Ingresos (S/)",data,backgroundColor:"rgba(34,197,94,0.7)",borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>"S/ "+v},grid:{color:"rgba(0,0,0,0.05)"}},x:{grid:{display:false}}}}});
+
+const espLabels=d.especies.map(x=>x.especie);
+const espData=d.especies.map(x=>x.cantidad);
+const espColors=["#22c55e","#3b82f6","#a855f7","#f59e0b","#ef4444","#06b6d4"];
+if(chartEspecies)chartEspecies.destroy();
+chartEspecies=new Chart(document.getElementById("chart-especies"),{type:"doughnut",data:{labels:espLabels,datasets:[{data:espData,backgroundColor:espColors.slice(0,espLabels.length),borderWidth:2,borderColor:"#fff"}]},options:{responsive:true,maintainAspectRatio:false,cutout:"60%",plugins:{legend:{position:"bottom",labels:{boxWidth:12,padding:10,font:{size:11}}}}}});
+
+const srvLabels=d.top_servicios.map(x=>x.nombre.length>18?x.nombre.substring(0,18)+"...":x.nombre);
+const srvData=d.top_servicios.map(x=>x.cantidad);
+if(chartServicios)chartServicios.destroy();
+chartServicios=new Chart(document.getElementById("chart-servicios"),{type:"bar",data:{labels:srvLabels,datasets:[{label:"Unidades vendidas",data:srvData,backgroundColor:["#3b82f6","#06b6d4","#a855f7","#f59e0b","#ef4444","#22c55e"],borderRadius:6,borderSkipped:false}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,grid:{color:"rgba(0,0,0,0.05)"}},y:{grid:{display:false}}}}});
+
+const cstm=d.proximas_citas;
+document.getElementById("citas-hoy-badge").textContent=cstm.length+" proximas";
+document.getElementById("dash-citas-hoy").innerHTML=cstm.length?cstm.map(c=>{
+const f=new Date(c.fecha);
+const fechaStr=f.toLocaleDateString("es-PE",{day:"2-digit",month:"short"})+" "+f.toLocaleTimeString("es-PE",{hour:"2-digit",minute:"2-digit"});
+const sc={Pendiente:"bg-yellow-100 text-yellow-700",Atendido:"bg-brand-100 text-brand-700",Cancelado:"bg-red-100 text-red-700"};
+return `<div class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 border border-gray-100">
+<div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs font-bold">${f.getDate()}</div>
+<div class="flex-1 min-w-0"><p class="text-sm font-medium text-gray-800 truncate">${c.paciente_nombre}</p><p class="text-xs text-gray-500 truncate">${c.motivo}</p></div>
+<div class="flex flex-col items-end gap-1"><span class="text-xs text-gray-400">${fechaStr}</span><span class="text-xs px-1.5 py-0.5 rounded-full font-medium ${sc[c.estado]||"bg-gray-100"}">${c.estado}</span></div></div>`
+}).join(""):'<p class="text-gray-400 text-sm text-center py-4">No hay citas pendientes</p>';
+
+const al=d.alertas_inventario;
+document.getElementById("alertas-badge").textContent=al.length+" alertas";
+document.getElementById("dash-alertas").innerHTML=al.length?al.map(a=>{
+if(a.tipo==="bajo_stock"){
+return `<div class="flex items-center gap-3 p-2 rounded-lg bg-red-50 border border-red-100">
+<div class="w-8 h-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center"><i class="fa-solid fa-box text-xs"></i></div>
+<div class="flex-1 min-w-0"><p class="text-sm font-medium text-gray-800 truncate">${a.nombre}</p><p class="text-xs text-red-500">Stock: ${a.stock} / Min: ${a.stock_minimo}</p></div>
+<button onclick="showSection('inventario')" class="text-xs text-blue-600 hover:underline">Ver</button></div>`
+}
+return `<div class="flex items-center gap-3 p-2 rounded-lg bg-amber-50 border border-amber-100">
+<div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center"><i class="fa-solid fa-clock text-xs"></i></div>
+<div class="flex-1 min-w-0"><p class="text-sm font-medium text-gray-800 truncate">${a.nombre}</p><p class="text-xs text-amber-600">Caduca: ${a.fecha_caducidad}</p></div></div>`
+}).join(""):'<p class="text-gray-400 text-sm text-center py-4">Sin alertas</p>';
+
 }catch(e){console.error("Dashboard:",e)}}
 async function loadUsuarios(){try{const d=await api("/users");const rl={admin:"bg-red-100 text-red-700",veterinario:"bg-blue-100 text-blue-700",recepcionista:"bg-emerald-100 text-emerald-700"};const lb={admin:"Admin",veterinario:"Veterinario",recepcionista:"Recepcionista"};document.getElementById("tabla-usuarios").innerHTML=d.map(u=>
 `<tr class="hover:bg-gray-50"><td class="px-4 py-3 text-sm">${u.id}</td><td class="px-4 py-3 text-sm font-medium">${u.username}</td><td class="px-4 py-3 text-sm">${u.nombre}</td><td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full font-medium ${rl[u.rol]||"bg-gray-100"}">${lb[u.rol]||u.rol}</span></td><td class="px-4 py-3 text-sm">Activo</td><td class="px-4 py-3 text-center"><button onclick="deleteUsuario(${u.id})" class="text-red-500 hover:text-red-700 text-sm"><i class="fa-solid fa-trash"></i></button></td></tr>
