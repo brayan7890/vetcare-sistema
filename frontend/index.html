@@ -105,6 +105,7 @@
 <h1 class="text-2xl font-bold text-gray-800">Propietarios</h1>
 <button onclick="openModal('propietario')" class="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-purple-700"><i class="fa-solid fa-user-plus mr-1"></i>Nuevo</button>
 </div>
+<div class="mb-3"><input id="search-propietarios" type="text" placeholder="Buscar por nombre, DNI, telefono..." oninput="filterTable('tabla-propietarios',this.value)" class="w-full border rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-purple-400"/></div>
 <div class="bg-white rounded-xl shadow overflow-hidden">
 <table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr>
 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">ID</th>
@@ -121,6 +122,7 @@
 <h1 class="text-2xl font-bold text-gray-800">Mascotas</h1>
 <button onclick="openModal('paciente')" class="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-brand-700"><i class="fa-solid fa-paw mr-1"></i>Nueva</button>
 </div>
+<div class="mb-3"><input id="search-mascotas" type="text" placeholder="Buscar por nombre, especie, raza, propietario..." oninput="filterTable('tabla-mascotas',this.value)" class="w-full border rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-400"/></div>
 <div class="bg-white rounded-xl shadow overflow-hidden">
 <table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr>
 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Nombre</th>
@@ -138,6 +140,7 @@
 <h1 class="text-2xl font-bold text-gray-800">Citas</h1>
 <button onclick="openModal('cita')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700"><i class="fa-solid fa-calendar-plus mr-1"></i>Nueva</button>
 </div>
+<div class="mb-3"><input id="search-citas" type="text" placeholder="Buscar por mascota, motivo, estado..." oninput="filterTable('tabla-citas',this.value)" class="w-full border rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400"/></div>
 <div class="bg-white rounded-xl shadow overflow-hidden">
 <table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr>
 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th>
@@ -153,8 +156,8 @@
 <h1 class="text-2xl font-bold text-gray-800">Historial Clinico</h1>
 <button onclick="openModal('historial')" class="bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-teal-700"><i class="fa-solid fa-notes-medical mr-1"></i>Nueva Consulta</button>
 </div>
-<div class="mb-4 flex flex-wrap gap-3 items-center">
-<label class="text-sm font-medium text-gray-700">Filtrar:</label>
+<div class="mb-3 flex flex-wrap gap-3 items-center">
+<input id="search-historial" type="text" placeholder="Buscar por mascota, motivo, diagnostico..." oninput="filterTable('tabla-historial',this.value)" class="flex-1 min-w-[200px] border rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-400"/>
 <select id="h-filtro-paciente" onchange="loadHistorial()" class="border rounded-lg px-3 py-2 text-sm outline-none"><option value="">Todas</option></select>
 </div>
 <div class="bg-white rounded-xl shadow overflow-hidden">
@@ -174,6 +177,7 @@
 <button onclick="openModal('inventario')" class="bg-rose-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-rose-700"><i class="fa-solid fa-box mr-1"></i>Nuevo</button>
 </div>
 <div id="stock-alerta" class="hidden mb-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3"></div>
+<div class="mb-3"><input id="search-inventario" type="text" placeholder="Buscar por nombre, categoria, proveedor..." oninput="filterTable('tabla-inventario',this.value)" class="w-full border rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-rose-400"/></div>
 <div class="bg-white rounded-xl shadow overflow-hidden">
 <table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr>
 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Articulo</th>
@@ -192,6 +196,7 @@
 <button onclick="openModal('servicio')" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700"><i class="fa-solid fa-cubes mr-1"></i>Servicios</button>
 <button onclick="openModal('comprobante')" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-700"><i class="fa-solid fa-file-invoice-dollar mr-1"></i>Nuevo Comprobante</button>
 </div></div>
+<div class="mb-3"><input id="search-comprobantes" type="text" placeholder="Buscar por serie, cliente, tipo..." oninput="filterTable('tabla-comprobantes',this.value)" class="w-full border rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-400"/></div>
 <div class="bg-white rounded-xl shadow overflow-hidden">
 <table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr>
 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Serie</th>

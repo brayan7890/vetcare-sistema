@@ -70,6 +70,18 @@ def eliminar_historial(hid: int, db: Session = Depends(get_db), _a: Usuario = De
     db.commit()
 
 
+@router.put("/historial/{hid}", response_model=HistorialResponse)
+def editar_historial(hid: int, data: HistorialCreate, db: Session = Depends(get_db), _u: Usuario = Depends(get_current_active_user)):
+    h = db.query(HistorialClinico).filter(HistorialClinico.id == hid).first()
+    if not h:
+        raise HTTPException(status_code=404, detail="Registro no encontrado")
+    for k, v in data.model_dump(exclude_unset=True).items():
+        setattr(h, k, v)
+    db.commit()
+    db.refresh(h)
+    return h
+
+
 @router.post("/historial/{hid}/facturar", response_model=HistorialResponse)
 def vincular_factura(hid: int, data: dict, db: Session = Depends(get_db), _u: Usuario = Depends(get_current_active_user)):
     h = db.query(HistorialClinico).filter(HistorialClinico.id == hid).first()

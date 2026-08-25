@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import traceback
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -153,9 +154,14 @@ def crear_comprobante(data: ComprobanteCreate, db: Session = Depends(get_db), us
         db.add(detalle)
 
         if det.inventario_id:
-            inv = db.query(Inventario).filter(Inventario.id == det.inventario_id).first()
-            if inv:
-                inv.stock -= det.cantidad
+            try:
+                inv = db.query(Inventario).filter(Inventario.id == det.inventario_id).first()
+                if inv:
+                    inv.stock = int(inv.stock or 0) - int(det.cantidad or 1)
+            except Exception:
+                traceback.print_exc()
+                db.rollback()
+                raise HTTPException(status_code=500, detail="Error al descontar stock de inventario")
 
     db.commit()
     db.refresh(comprobante)
@@ -169,6 +175,11 @@ def anular_comprobante(cid: int, db: Session = Depends(get_db), _a: Usuario = De
         raise HTTPException(status_code=404, detail="Comprobante no encontrado")
     if comp.estado == "Anulado":
         raise HTTPException(status_code=400, detail="El comprobante ya esta anulado")
+    for det in comp.detalles:
+        if det.inventario_id:
+            inv = db.query(Inventario).filter(Inventario.id == det.inventario_id).first()
+            if inv:
+                inv.stock = int(inv.stock or 0) + int(det.cantidad or 1)
     comp.estado = "Anulado"
     db.commit()
-    return {"mensaje": "Comprobante anulado"}
+    return {"mensaje": "Comprobante anulado y stock devuelto"}
