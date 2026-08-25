@@ -102,70 +102,74 @@ def obtener_comprobante(cid: int, db: Session = Depends(get_db), _u: Usuario = D
 
 @router.post("/comprobantes", response_model=ComprobanteResponse, status_code=201)
 def crear_comprobante(data: ComprobanteCreate, db: Session = Depends(get_db), user: Usuario = Depends(get_current_active_user)):
-    if not data.detalles:
-        raise HTTPException(status_code=400, detail="El comprobante debe tener al menos un item")
+    try:
+        if not data.detalles:
+            raise HTTPException(status_code=400, detail="El comprobante debe tener al menos un item")
 
-    for det in data.detalles:
-        if det.servicio_producto_id:
-            sp = db.query(ServicioProducto).filter(ServicioProducto.id == det.servicio_producto_id).first()
-            if not sp:
-                raise HTTPException(status_code=404, detail=f"Servicio ID {det.servicio_producto_id} no encontrado")
-        elif det.inventario_id:
-            inv = db.query(Inventario).filter(Inventario.id == det.inventario_id).first()
-            if not inv:
-                raise HTTPException(status_code=404, detail=f"Producto de inventario ID {det.inventario_id} no encontrado")
-            if inv.stock < det.cantidad:
-                raise HTTPException(status_code=400, detail=f"Stock insuficiente para '{inv.nombre}': disponible {inv.stock}, solicitado {det.cantidad}")
-        else:
-            raise HTTPException(status_code=400, detail="Cada detalle debe tener servicio_producto_id o inventario_id")
+        for det in data.detalles:
+            if det.servicio_producto_id:
+                sp = db.query(ServicioProducto).filter(ServicioProducto.id == det.servicio_producto_id).first()
+                if not sp:
+                    raise HTTPException(status_code=404, detail=f"Servicio ID {det.servicio_producto_id} no encontrado")
+            elif det.inventario_id:
+                inv = db.query(Inventario).filter(Inventario.id == det.inventario_id).first()
+                if not inv:
+                    raise HTTPException(status_code=404, detail=f"Producto de inventario ID {det.inventario_id} no encontrado")
+                stock_actual = int(inv.stock or 0)
+                cant = int(det.cantidad or 1)
+                if stock_actual < cant:
+                    raise HTTPException(status_code=400, detail=f"Stock insuficiente para '{inv.nombre}': disponible {stock_actual}, solicitado {cant}")
+            else:
+                raise HTTPException(status_code=400, detail="Cada detalle debe tener servicio_producto_id o inventario_id")
 
-    serie, numero = _next_number(db, data.tipo_documento)
+        serie, numero = _next_number(db, data.tipo_documento)
 
-    total_bruto = sum(d.cantidad * d.precio_unitario for d in data.detalles)
-    subtotal = round(total_bruto / (1 + IGV_RATE), 2)
-    igv = round(total_bruto - subtotal, 2)
+        total_bruto = sum(d.cantidad * d.precio_unitario for d in data.detalles)
+        subtotal = round(total_bruto / (1 + IGV_RATE), 2)
+        igv = round(total_bruto - subtotal, 2)
 
-    comprobante = ComprobantePago(
-        serie=serie,
-        numero=numero,
-        tipo_documento=data.tipo_documento,
-        cliente_nombre=data.cliente_nombre,
-        cliente_ruc_dni=data.cliente_ruc_dni,
-        subtotal=subtotal,
-        igv=igv,
-        total=total_bruto,
-        estado="Pagado",
-        usuario_id=user.id,
-        propietario_id=data.propietario_id,
-    )
-    db.add(comprobante)
-    db.flush()
-
-    for det in data.detalles:
-        det_subtotal = det.cantidad * det.precio_unitario
-        detalle = DetalleComprobante(
-            comprobante_id=comprobante.id,
-            servicio_producto_id=det.servicio_producto_id,
-            inventario_id=det.inventario_id,
-            cantidad=det.cantidad,
-            precio_unitario=det.precio_unitario,
-            subtotal=det_subtotal,
+        comprobante = ComprobantePago(
+            serie=serie,
+            numero=numero,
+            tipo_documento=data.tipo_documento,
+            cliente_nombre=data.cliente_nombre,
+            cliente_ruc_dni=data.cliente_ruc_dni,
+            subtotal=subtotal,
+            igv=igv,
+            total=total_bruto,
+            estado="Pagado",
+            usuario_id=user.id,
+            propietario_id=data.propietario_id,
         )
-        db.add(detalle)
+        db.add(comprobante)
+        db.flush()
 
-        if det.inventario_id:
-            try:
+        for det in data.detalles:
+            det_subtotal = det.cantidad * det.precio_unitario
+            detalle = DetalleComprobante(
+                comprobante_id=comprobante.id,
+                servicio_producto_id=det.servicio_producto_id,
+                inventario_id=det.inventario_id,
+                cantidad=det.cantidad,
+                precio_unitario=det.precio_unitario,
+                subtotal=det_subtotal,
+            )
+            db.add(detalle)
+
+            if det.inventario_id:
                 inv = db.query(Inventario).filter(Inventario.id == det.inventario_id).first()
                 if inv:
                     inv.stock = int(inv.stock or 0) - int(det.cantidad or 1)
-            except Exception:
-                traceback.print_exc()
-                db.rollback()
-                raise HTTPException(status_code=500, detail="Error al descontar stock de inventario")
 
-    db.commit()
-    db.refresh(comprobante)
-    return comprobante
+        db.commit()
+        db.refresh(comprobante)
+        return comprobante
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        db.rollback()
+        return JSONResponse(status_code=500, content={"detail": str(e)})
 
 
 @router.post("/comprobantes/{cid}/anular")
