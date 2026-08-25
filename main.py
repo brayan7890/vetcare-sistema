@@ -81,6 +81,17 @@ def _sync_schema():
                 except Exception:
                     pass
 
+        if is_pg and "detalles_comprobante" in insp.get_table_names():
+            cols = {c["name"]: c for c in insp.get_columns("detalles_comprobante")}
+            sp_col = cols.get("servicio_producto_id")
+            if sp_col and not sp_col.get("nullable", True):
+                try:
+                    conn.execute(text("ALTER TABLE detalles_comprobante ALTER COLUMN servicio_producto_id DROP NOT NULL"))
+                    conn.commit()
+                    print(">>> Migration: detalles_comprobante.servicio_producto_id DROP NOT NULL")
+                except Exception:
+                    pass
+
 
 _sync_schema()
 
