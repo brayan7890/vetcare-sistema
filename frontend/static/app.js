@@ -117,21 +117,25 @@ initDetalles();
 await loadServiciosSelect();
 const container=document.getElementById("detalles-container");
 container.innerHTML="";
+const txt=(h.motivo_consulta+" "+(h.diagnostico||"")+" "+(h.tratamiento||"")).toLowerCase();
 const consultas=serviciosCache.filter(s=>s.nombre.toLowerCase().includes("consulta"));
-if(consultas.length){addDetalleRowWithService(consultas[0].id,consultas[0].precio,1)}
-if(h.tratamiento&&h.tratamiento.toLowerCase().includes("vacuna")){const sv=serviciosCache.filter(s=>s.nombre.toLowerCase().includes("vacuna"));if(sv.length)addDetalleRowWithService(sv[0].id,sv[0].precio,1)}
-if(h.tratamiento&&h.tratamiento.toLowerCase().includes("desparasit")){const sv=serviciosCache.filter(s=>s.nombre.toLowerCase().includes("desparasit"));if(sv.length)addDetalleRowWithService(sv[0].id,sv[0].precio,1)}
-if(h.tratamiento&&h.tratamiento.toLowerCase().includes("profilaxis")){const sv=serviciosCache.filter(s=>s.nombre.toLowerCase().includes("profilaxis"));if(sv.length)addDetalleRowWithService(sv[0].id,sv[0].precio,1)}
-if(h.tratamiento&&h.tratamiento.toLowerCase().includes("antibiot")){const sv=serviciosCache.filter(s=>s.nombre.toLowerCase().includes("amoxicilina"));if(sv.length)addDetalleRowWithService(sv[0].id,sv[0].precio,1)}
+if(consultas.length){addDetalleRowWithService("s-"+consultas[0].id,consultas[0].precio,1)}
+const invKeywords=[{kw:"vacuna",match:"vacuna"},{kw:"desparasit",match:"desparasit"},{kw:"profilaxis",match:"profilaxis"},{kw:"amoxicilina",match:"amoxicilina"},{kw:"metronidazol",match:"metronidazol"},{kw:"ibuprofeno",match:"ibuprofeno"},{kw:"clorhexidina",match:"clorhexidina"},{kw:"antibiot",match:"amoxicilina"},{kw:"antisept",match:"clorhexidina"},{kw:"antiinflam",match:"ibuprofeno"},{kw:"analges",match:"ibuprofeno"},{kw:"alimento",match:"royal canin"},{kw:"dieta",match:"hills"}];
+const added=new Set();
+invKeywords.forEach(function(k){
+if(txt.includes(k.kw)&&!added.has(k.match)){
+const found=inventarioCache.filter(s=>s.nombre.toLowerCase().includes(k.match));
+if(found.length&&!added.has(found[0].id)){addDetalleRowWithService("i-"+found[0].id,found[0].precio,1);added.add(found[0].id)}
+added.add(k.match)}
+});
 updateTotals();
 openModal("comprobante");
 }catch(e){showToast(e.message,false)}}
-function addDetalleRowWithService(serviceId,price,qty){
+function addDetalleRowWithService(comboId,price,qty){
 const c=document.getElementById("detalles-container");
 const r=document.createElement("div");
 r.className="flex gap-2 items-end fade-in";
-var opts=serviciosCache.map(function(s){return '<option value="'+s.id+'" data-precio="'+s.precio+'"'+(s.id===serviceId?" selected":"")+'">'+s.nombre+' - S/ '+s.precio.toFixed(2)+'</option>'}).join("");
-r.innerHTML='<select class="det-sel border rounded-lg px-2 py-1.5 text-sm outline-none flex-1" onchange="onDetSelChange(this)"><option value="">Seleccionar...</option>'+opts+'</select><input type="number" class="det-cant border rounded-lg px-2 py-1.5 text-sm outline-none w-16" value="'+qty+'" min="1" onchange="updateTotals()"/><input type="number" class="det-prec border rounded-lg px-2 py-1.5 text-sm outline-none w-24" step="0.01" value="'+price.toFixed(2)+'" placeholder="S/" onchange="updateTotals()"/><button type="button" onclick="removeDetRow(this)" class="text-red-500 hover:text-red-700 px-1"><i class="fa-solid fa-xmark"></i></button>';
+r.innerHTML='<select class="det-sel border rounded-lg px-2 py-1.5 text-sm outline-none flex-1" onchange="onDetSelChange(this)">'+buildDetOpts(comboId)+'</select><input type="number" class="det-cant border rounded-lg px-2 py-1.5 text-sm outline-none w-16" value="'+qty+'" min="1" onchange="updateTotals()"/><input type="number" class="det-prec border rounded-lg px-2 py-1.5 text-sm outline-none w-24" step="0.01" value="'+price.toFixed(2)+'" placeholder="S/" onchange="updateTotals()"/><button type="button" onclick="removeDetRow(this)" class="text-red-500 hover:text-red-700 px-1"><i class="fa-solid fa-xmark"></i></button>';
 c.appendChild(r);updateTotals()}
 async function printHistorial(id){try{const h=await api("/historial/"+id);const p=await api("/pacientes/"+h.paciente_id);const po=await api("/propietarios/"+p.propietario_id);const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Historial - ${p.nombre}</title><style>body{font-family:Arial,sans-serif;padding:30px;font-size:13px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ddd;padding:6px 8px;text-align:left}.hdr{font-size:18px;font-weight:bold;border:none;padding:0 0 8px}.sub{color:#666;border:none;padding:0}.em{border:none;padding:0;padding-top:12px;font-weight:bold}</style></head><body><table><tr><td class="hdr" colspan="4">VetCare - Historial Clinico</td></tr><tr><td class="sub" colspan="4">${new Date(h.fecha).toLocaleString("es-PE")}</td></tr><tr><td colspan="4"></td></tr><tr><td class="em">Mascota:</td><td>${p.nombre} (${p.especie} - ${p.raza||"N/A"})</td><td class="em">Propietario:</td><td>${po.nombre} - ${po.telefono}</td></tr><tr><td class="em">Sexo:</td><td>${p.sexo||"N/A"}</td><td class="em">Peso:</td><td>${p.peso?p.peso+" kg":"N/A"}</td></tr><tr><td colspan="4"></td></tr><tr><td class="em">Motivo:</td><td colspan="3">${h.motivo_consulta}</td></tr><tr><td class="em">Diagnostico:</td><td colspan="3">${h.diagnostico||"-"}</td></tr><tr><td class="em">Tratamiento:</td><td colspan="3">${h.tratamiento||"-"}</td></tr><tr><td class="em">Temperatura:</td><td>${h.temperatura||"N/A"}</td><td class="em">Freq. Cardiaca:</td><td>${h.frecuencia_cardiaca||"N/A"}</td></tr><tr><td class="em">Peso(kg):</td><td>${h.peso_kg||"N/A"}</td><td></td><td></td></tr><tr><td class="em">Observaciones:</td><td colspan="3">${h.observaciones||"-"}</td></tr><tr><td class="em">Proxima Cita:</td><td colspan="3">${h.proxima_cita?new Date(h.proxima_cita).toLocaleString("es-PE"):"Sin programar"}</td></tr></table></body></html>`;const w=window.open("","","width=750,height=600");w.document.write(html);w.document.close();w.print()}catch(e){showToast(e.message,false)}}
 async function loadInventario(){try{const d=await api("/inventario");const la=document.getElementById("stock-alerta");const bajos=d.filter(x=>x.stock<=x.stock_minimo);if(bajos.length){la.classList.remove("hidden");la.innerHTML=`<i class="fa-solid fa-triangle-exclamation mr-1"></i><strong>${bajos.length} articulos con stock bajo:</strong> ${bajos.map(x=>x.nombre+" ("+x.stock+")").join(", ")}`}else{la.classList.add("hidden")}document.getElementById("tabla-inventario").innerHTML=d.map(x=>
@@ -142,15 +146,22 @@ function openStockModal(id,nombre,actual){document.getElementById("s-id").value=
 async function submitStock(e){e.preventDefault();const id=document.getElementById("s-id").value;const cant=parseInt(document.getElementById("s-cantidad").value);try{await api("/inventario/"+id+"/stock",{method:"POST",body:JSON.stringify({cantidad:cant})});showToast("Stock actualizado");closeModal("stock");loadInventario()}catch(e){showToast(e.message,false)}}
 async function deleteInventario(id){if(!confirm("Eliminar este articulo?"))return;try{await api("/inventario/"+id,{method:"DELETE"});showToast("Articulo eliminado");loadInventario()}catch(e){showToast(e.message,false)}}
 let serviciosCache=[];
-async function loadServiciosSelect(){try{serviciosCache=await api('/facturacion/servicios')}catch{serviciosCache=[]}}
+let inventarioCache=[];
+async function loadServiciosSelect(){try{const d=await api('/facturacion/productos-disponibles');serviciosCache=d.filter(x=>x.fuente==='servicio');inventarioCache=d.filter(x=>x.fuente==='inventario');serviciosCacheFull=d}catch{serviciosCache=[];inventarioCache=[];serviciosCacheFull=[]}}
+let serviciosCacheFull=[];
 async function submitServicio(e){e.preventDefault();try{await api('/facturacion/servicios',{method:'POST',body:JSON.stringify({nombre:document.getElementById('sv-nombre').value,tipo:document.getElementById('sv-tipo').value,precio:parseFloat(document.getElementById('sv-precio').value)})});showToast('Servicio/Producto creado');closeModal('servicio');loadServiciosSelect();loadComprobantes()}catch(e){showToast(e.message,false)}}
 function initDetalles(){document.getElementById('detalles-container').innerHTML='';addDetalleRow()}
+function buildDetOpts(selectedId){
+  var h='<option value="">Seleccionar...</option>';
+  if(serviciosCache.length){h+='<optgroup label="Servicios">';serviciosCache.forEach(function(s){h+='<option value="s-'+s.id+'" data-precio="'+s.precio+'" data-tipo="servicio" data-id="'+s.id+'"'+(selectedId==='s-'+s.id?' selected':'')+'>'+s.nombre+' - S/ '+s.precio.toFixed(2)+'</option>'});h+='</optgroup>'}
+  if(inventarioCache.length){h+='<optgroup label="Inventario (con stock)">';inventarioCache.forEach(function(s){h+='<option value="i-'+s.id+'" data-precio="'+s.precio+'" data-tipo="inventario" data-id="'+s.id+'"'+(selectedId==='i-'+s.id?' selected':'')+'>'+s.nombre+' - S/ '+s.precio.toFixed(2)+' ['+s.stock+']</option>'});h+='</optgroup>'}
+  return h
+}
 function addDetalleRow(){
   const c=document.getElementById('detalles-container');
   const r=document.createElement('div');
   r.className='flex gap-2 items-end fade-in';
-  var opts=serviciosCache.map(function(s){return '<option value="'+s.id+'" data-precio="'+s.precio+'">'+s.nombre+' - S/ '+s.precio.toFixed(2)+'</option>'}).join('');
-  r.innerHTML='<select class="det-sel border rounded-lg px-2 py-1.5 text-sm outline-none flex-1" onchange="onDetSelChange(this)"><option value="">Seleccionar...</option>'+opts+'</select><input type="number" class="det-cant border rounded-lg px-2 py-1.5 text-sm outline-none w-16" value="1" min="1" onchange="updateTotals()"/><input type="number" class="det-prec border rounded-lg px-2 py-1.5 text-sm outline-none w-24" step="0.01" placeholder="S/" onchange="updateTotals()"/><button type="button" onclick="removeDetRow(this)" class="text-red-500 hover:text-red-700 px-1"><i class="fa-solid fa-xmark"></i></button>';
+  r.innerHTML='<select class="det-sel border rounded-lg px-2 py-1.5 text-sm outline-none flex-1" onchange="onDetSelChange(this)">'+buildDetOpts(null)+'</select><input type="number" class="det-cant border rounded-lg px-2 py-1.5 text-sm outline-none w-16" value="1" min="1" onchange="updateTotals()"/><input type="number" class="det-prec border rounded-lg px-2 py-1.5 text-sm outline-none w-24" step="0.01" placeholder="S/" onchange="updateTotals()"/><button type="button" onclick="removeDetRow(this)" class="text-red-500 hover:text-red-700 px-1"><i class="fa-solid fa-xmark"></i></button>';
   c.appendChild(r);updateTotals()
 }
 function onDetSelChange(sel){
@@ -189,7 +200,12 @@ async function submitComprobante(e){
     var sel=rows[i].querySelector('.det-sel').value;
     var cant=parseInt(rows[i].querySelector('.det-cant').value)||0;
     var prec=parseFloat(rows[i].querySelector('.det-prec').value)||0;
-    if(sel && cant>0 && prec>0){detalles.push({servicio_producto_id:parseInt(sel),cantidad:cant,precio_unitario:prec})}
+    if(sel && cant>0 && prec>0){
+      var item={cantidad:cant,precio_unitario:prec,servicio_producto_id:null,inventario_id:null};
+      if(sel.indexOf('s-')===0){item.servicio_producto_id=parseInt(sel.substring(2))}
+      else if(sel.indexOf('i-')===0){item.inventario_id=parseInt(sel.substring(2))}
+      detalles.push(item)
+    }
   }
   if(!detalles.length){showToast('Agrega al menos un item',false);return}
   var propVal=document.getElementById('cb-propietario').value;
@@ -207,11 +223,11 @@ async function submitComprobante(e){
       _cobrarHistorialId=null;
       document.getElementById('cb-cliente').readOnly=false;
       document.getElementById('cb-ruc').readOnly=false;
-      showToast('Comprobante generado');closeModal('comprobante');loadComprobantes();loadHistorial();return
+      showToast('Comprobante generado y stock actualizado');closeModal('comprobante');loadComprobantes();loadHistorial();return
     }
     document.getElementById('cb-cliente').readOnly=false;
     document.getElementById('cb-ruc').readOnly=false;
-    showToast('Comprobante generado');closeModal('comprobante');loadComprobantes()
+    showToast('Comprobante generado y stock actualizado');closeModal('comprobante');loadComprobantes()
   }catch(e){showToast(e.message,false)}
 }
 async function loadComprobantes(){

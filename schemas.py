@@ -191,7 +191,8 @@ class ServicioProductoResponse(ServicioProductoCreate):
 # -- Comprobante / Facturacion --
 
 class DetalleComprobanteCreate(BaseModel):
-    servicio_producto_id: int
+    servicio_producto_id: int | None = None
+    inventario_id: int | None = None
     cantidad: int = 1
     precio_unitario: float
 

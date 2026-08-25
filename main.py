@@ -60,7 +60,9 @@ def _sync_schema():
         ],
         "servicios_productos": [],
         "comprobantes_pago": [],
-        "detalles_comprobante": [],
+        "detalles_comprobante": [
+            ("inventario_id", "INTEGER", "INTEGER"),
+        ],
     }
 
     with engine.connect() as conn:

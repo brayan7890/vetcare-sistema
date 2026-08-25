@@ -142,7 +142,8 @@ class DetalleComprobante(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     comprobante_id = Column(Integer, ForeignKey("comprobantes_pago.id"), nullable=False)
-    servicio_producto_id = Column(Integer, ForeignKey("servicios_productos.id"), nullable=False)
+    servicio_producto_id = Column(Integer, ForeignKey("servicios_productos.id"), nullable=True)
+    inventario_id = Column(Integer, ForeignKey("inventario.id"), nullable=True)
     cantidad = Column(Integer, nullable=False, default=1)
     precio_unitario = Column(Float, nullable=False, default=0.0)
     subtotal = Column(Float, nullable=False, default=0.0)

@@ -4,14 +4,15 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import ServicioProducto, ComprobantePago, DetalleComprobante, Usuario
+from models import ServicioProducto, ComprobantePago, DetalleComprobante, Usuario, Inventario
 from schemas import (
     ServicioProductoCreate,
     ServicioProductoResponse,
     ComprobanteCreate,
     ComprobanteResponse,
 )
-from dependencies import get_current_active_user, require_admin
+from dependencies import get_current_active_user, require_admin, get_current_active_user as _auth
+from fastapi.responses import JSONResponse
 
 router = APIRouter(prefix="/facturacion", tags=["Facturacion"])
 
@@ -35,6 +36,18 @@ def _next_number(db: Session, tipo: str) -> tuple[str, int]:
 @router.get("/servicios", response_model=list[ServicioProductoResponse])
 def listar_servicios(db: Session = Depends(get_db), _u: Usuario = Depends(get_current_active_user)):
     return db.query(ServicioProducto).filter(ServicioProducto.activo == True).order_by(ServicioProducto.nombre).all()
+
+
+@router.get("/productos-disponibles")
+def listar_productos_disponibles(db: Session = Depends(get_db), _u: Usuario = Depends(get_current_active_user)):
+    servicios = db.query(ServicioProducto).filter(ServicioProducto.activo == True).order_by(ServicioProducto.nombre).all()
+    inventario = db.query(Inventario).filter(Inventario.stock > 0).order_by(Inventario.nombre).all()
+    resultado = []
+    for s in servicios:
+        resultado.append({"id": s.id, "nombre": s.nombre, "precio": s.precio, "tipo": "servicio", "fuente": "servicio", "stock": None})
+    for inv in inventario:
+        resultado.append({"id": inv.id, "nombre": inv.nombre, "precio": inv.precio_venta, "tipo": "inventario", "fuente": "inventario", "stock": inv.stock})
+    return resultado
 
 
 @router.post("/servicios", response_model=ServicioProductoResponse, status_code=201)
@@ -92,9 +105,18 @@ def crear_comprobante(data: ComprobanteCreate, db: Session = Depends(get_db), us
         raise HTTPException(status_code=400, detail="El comprobante debe tener al menos un item")
 
     for det in data.detalles:
-        sp = db.query(ServicioProducto).filter(ServicioProducto.id == det.servicio_producto_id).first()
-        if not sp:
-            raise HTTPException(status_code=404, detail=f"Servicio/Producto ID {det.servicio_producto_id} no encontrado")
+        if det.servicio_producto_id:
+            sp = db.query(ServicioProducto).filter(ServicioProducto.id == det.servicio_producto_id).first()
+            if not sp:
+                raise HTTPException(status_code=404, detail=f"Servicio ID {det.servicio_producto_id} no encontrado")
+        elif det.inventario_id:
+            inv = db.query(Inventario).filter(Inventario.id == det.inventario_id).first()
+            if not inv:
+                raise HTTPException(status_code=404, detail=f"Producto de inventario ID {det.inventario_id} no encontrado")
+            if inv.stock < det.cantidad:
+                raise HTTPException(status_code=400, detail=f"Stock insuficiente para '{inv.nombre}': disponible {inv.stock}, solicitado {det.cantidad}")
+        else:
+            raise HTTPException(status_code=400, detail="Cada detalle debe tener servicio_producto_id o inventario_id")
 
     serie, numero = _next_number(db, data.tipo_documento)
 
@@ -123,11 +145,17 @@ def crear_comprobante(data: ComprobanteCreate, db: Session = Depends(get_db), us
         detalle = DetalleComprobante(
             comprobante_id=comprobante.id,
             servicio_producto_id=det.servicio_producto_id,
+            inventario_id=det.inventario_id,
             cantidad=det.cantidad,
             precio_unitario=det.precio_unitario,
             subtotal=det_subtotal,
         )
         db.add(detalle)
+
+        if det.inventario_id:
+            inv = db.query(Inventario).filter(Inventario.id == det.inventario_id).first()
+            if inv:
+                inv.stock -= det.cantidad
 
     db.commit()
     db.refresh(comprobante)
